@@ -1,0 +1,45 @@
+[gd_scene format=3 uid="uid://bxhwg4umeeers"]
+
+[ext_resource type="PackedScene" uid="uid://b0ymi1igjbglw" path="res://assets/models/robot_gobot.glb" id="1_o5qli"]
+[ext_resource type="PackedScene" uid="uid://clc5dre31iskm" path="res://addons/godot-xr-tools/xr/start_xr.tscn" id="2_0wfyh"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0wfyh"]
+sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+
+[sub_resource type="Sky" id="Sky_sugp2"]
+sky_material = SubResource("ProceduralSkyMaterial_0wfyh")
+
+[sub_resource type="Environment" id="Environment_jyhfs"]
+background_mode = 2
+sky = SubResource("Sky_sugp2")
+tonemap_mode = 2
+glow_enabled = true
+
+[node name="main" type="Node3D" unique_id=202694545]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2066679643]
+environment = SubResource("Environment_jyhfs")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=423629506]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 2.5657995, 0)
+shadow_enabled = true
+
+[node name="robot_gobot" parent="." unique_id=2143264360 instance=ExtResource("1_o5qli")]
+
+[node name="StartXR" parent="." unique_id=1017752894 instance=ExtResource("2_0wfyh")]
+
+[node name="XROrigin3D" type="XROrigin3D" parent="." unique_id=835933874]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4872775, 2.1425269)
+
+[node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D" unique_id=413341949]
+
+[node name="OpenXRRenderModelManager" type="OpenXRRenderModelManager" parent="XROrigin3D" unique_id=1760177678]
+
+[node name="XRController3D" type="XRController3D" parent="XROrigin3D" unique_id=559462315]
+tracker = &"/user/hand_tracker/right"
+show_when_tracked = true
+
+[node name="XRController3D2" type="XRController3D" parent="XROrigin3D" unique_id=439232952]
+tracker = &"/user/hand_tracker/left"
+show_when_tracked = true

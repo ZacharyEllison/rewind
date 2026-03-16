@@ -1,0 +1,23 @@
+[gd_scene load_steps=5 format=3 uid="uid://main_entry_001"]
+
+[ext_resource type="Script" id="1_game_manager" uid="uid://game_manager_001" path="res://assets/scripts/_systems/GameManager.gd"]
+[ext_resource type="Script" id="2_robot_controller" uid="uid://robot_controller_001" path="res://assets/scripts/_systems/RobotCharacterController.gd"]
+
+[node name="Main" type="Node"]
+script = ExtResource("1_game_manager")
+
+[node name="PlayerCamera" type="VirtualCamera3D" parent="."]
+position = Vector3(0, 0, -2)
+transform.rotation_degrees = Vector3(25, 0, 0)
+current = true
+
+[node name="RobotView" type="Node3D" parent="PlayerCamera"]
+position = Vector3(0, 0, 0)
+transform.rotation_degrees = Vector3(-90, 0, 0)
+
+[node name="Robot" type="Node3D" parent="RobotView"]
+position = Vector3(0, 0, 0)
+
+[node name="RobotController" type="RobotCharacterController" parent="Robot"]
+script = ExtResource("2_robot_controller")
+
