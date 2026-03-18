@@ -3,9 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cnvih1hyiisst"
-path.etc2="res://.godot/imported/robot_bee_bee_albedo.png-2ef69a95c4c19d5437e8172addcae7d8.etc2.ctex"
+path.s3tc="res://.godot/imported/robot_bee_bee_albedo.png-2ef69a95c4c19d5437e8172addcae7d8.s3tc.ctex"
 metadata={
-"imported_formats": ["etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/robot_bee_bee_albedo.png"
-dest_files=["res://.godot/imported/robot_bee_bee_albedo.png-2ef69a95c4c19d5437e8172addcae7d8.etc2.ctex"]
+dest_files=["res://.godot/imported/robot_bee_bee_albedo.png-2ef69a95c4c19d5437e8172addcae7d8.s3tc.ctex"]
 
 [params]
 

@@ -3,9 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://do13f0sy2fyhf"
-path.etc2="res://.godot/imported/robot_beetle_eye_mask.png-559ff4760e9567123dc4aa9578b4b94a.etc2.ctex"
+path.s3tc="res://.godot/imported/robot_beetle_eye_mask.png-559ff4760e9567123dc4aa9578b4b94a.s3tc.ctex"
 metadata={
-"imported_formats": ["etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/robot_beetle_eye_mask.png"
-dest_files=["res://.godot/imported/robot_beetle_eye_mask.png-559ff4760e9567123dc4aa9578b4b94a.etc2.ctex"]
+dest_files=["res://.godot/imported/robot_beetle_eye_mask.png-559ff4760e9567123dc4aa9578b4b94a.s3tc.ctex"]
 
 [params]
 

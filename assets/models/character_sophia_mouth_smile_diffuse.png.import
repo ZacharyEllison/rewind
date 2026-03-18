@@ -3,9 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://chsqquij6vd52"
-path.etc2="res://.godot/imported/character_sophia_mouth_smile_diffuse.png-746090f04a031572fe42429c98c694c2.etc2.ctex"
+path.s3tc="res://.godot/imported/character_sophia_mouth_smile_diffuse.png-746090f04a031572fe42429c98c694c2.s3tc.ctex"
 metadata={
-"imported_formats": ["etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/character_sophia_mouth_smile_diffuse.png"
-dest_files=["res://.godot/imported/character_sophia_mouth_smile_diffuse.png-746090f04a031572fe42429c98c694c2.etc2.ctex"]
+dest_files=["res://.godot/imported/character_sophia_mouth_smile_diffuse.png-746090f04a031572fe42429c98c694c2.s3tc.ctex"]
 
 [params]
 

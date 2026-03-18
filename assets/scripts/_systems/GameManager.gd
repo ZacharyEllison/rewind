@@ -33,6 +33,7 @@ var max_rewind_seconds: float = 0.0
 ## References
 var robot_node: Node
 var recorded_positions: Array[Vector3] = []
+var recorded_animations: Array[String] = []
 
 ## Elapsed time since the last position sample was recorded.
 ## Used instead of floating-point modulo to reliably fire at RECORD_INTERVAL.
@@ -70,6 +71,7 @@ func start_recording() -> void:
     current_attempt_duration = 0.0
     _record_accumulator = 0.0
     recorded_positions.clear()
+    recorded_animations.clear()
 
     emit_signal("recording_started", current_attempt_count, MAX_ATTEMPT_TIME)
     print("Recording started - Attempt #%d, Max time: %0.fs" % [
@@ -89,6 +91,10 @@ func _process(delta: float) -> void:
             if _record_accumulator >= RECORD_INTERVAL:
                 _record_accumulator -= RECORD_INTERVAL
                 recorded_positions.append(robot_node.global_position)
+                var body := robot_node as CharacterBody3D
+                var on_floor := body.is_on_floor() if body else true
+                var velocity := body.velocity if body else Vector3.ZERO
+                recorded_animations.append(_derive_animation_state(velocity, on_floor))
         
         # Auto-stop at max time
         if current_attempt_duration >= MAX_ATTEMPT_TIME:
@@ -121,6 +127,7 @@ func start_new_attempt() -> void:
     current_attempt_duration = 0.0
     _record_accumulator = 0.0
     recorded_positions.clear()
+    recorded_animations.clear()
     _reset_robot_position()
     
     print("New attempt started")
@@ -133,8 +140,13 @@ func retry_current_attempt() -> void:
     print("Current attempt retried")
 
 func _reset_robot_position() -> void:
-    if robot_node:
-        robot_node.global_position = Vector3.ZERO
+    if not robot_node:
+        return
+    # Use the robot's own spawn_position if available, so reset lands on the platform surface.
+    var spawn: Vector3 = robot_node.get("spawn_position") if robot_node.get("spawn_position") != null else Vector3(0, 0.5, 0)
+    robot_node.global_position = spawn
+    if robot_node is CharacterBody3D:
+        (robot_node as CharacterBody3D).velocity = Vector3.ZERO
 
 func set_robot(node: Node) -> void:
     robot_node = node
@@ -166,3 +178,18 @@ func add_sand_crystal() -> void:
     sand_crystal_count += 1
     max_rewind_seconds = CRYSTAL_SAND_VALUE * float(sand_crystal_count)
     emit_signal("sand_crystal_collected", sand_crystal_count)
+
+## Derives the animation state name from velocity and floor contact,
+## using the same thresholds as RobotAnimationController.
+func _derive_animation_state(velocity: Vector3, on_floor: bool) -> String:
+    const IDLE_THRESHOLD: float = 0.5
+    const RUN_THRESHOLD: float = 4.0
+    var horizontal_speed := Vector3(velocity.x, 0.0, velocity.z).length()
+    if not on_floor:
+        return "jump" if velocity.y > 0.0 else "fall"
+    elif horizontal_speed > RUN_THRESHOLD:
+        return "run"
+    elif horizontal_speed > IDLE_THRESHOLD:
+        return "walk"
+    else:
+        return "idle"

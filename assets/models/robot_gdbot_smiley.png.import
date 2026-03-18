@@ -3,9 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://mn3qemdpilpq"
-path.etc2="res://.godot/imported/robot_gdbot_smiley.png-ae218a8ff03db30ced59cf8bb6ba611d.etc2.ctex"
+path.s3tc="res://.godot/imported/robot_gdbot_smiley.png-ae218a8ff03db30ced59cf8bb6ba611d.s3tc.ctex"
 metadata={
-"imported_formats": ["etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/robot_gdbot_smiley.png"
-dest_files=["res://.godot/imported/robot_gdbot_smiley.png-ae218a8ff03db30ced59cf8bb6ba611d.etc2.ctex"]
+dest_files=["res://.godot/imported/robot_gdbot_smiley.png-ae218a8ff03db30ced59cf8bb6ba611d.s3tc.ctex"]
 
 [params]
 

@@ -125,9 +125,24 @@ func _get_combined_stick() -> Vector2:
 		if right_vec.length() < input_deadzone:
 			right_vec = Vector2.ZERO
 
+	var controller_vec: Vector2
 	if left_vec.length_squared() >= right_vec.length_squared():
-		return left_vec
-	return right_vec
+		controller_vec = left_vec
+	else:
+		controller_vec = right_vec
+
+	# Desktop keyboard fallback: WASD and arrow keys checked directly.
+	# Positive X = strafe right, positive Y = forward (maps to -Z in world space).
+	var kb_x := (float(Input.is_key_pressed(KEY_D)) + float(Input.is_key_pressed(KEY_RIGHT))) \
+			  - (float(Input.is_key_pressed(KEY_A)) + float(Input.is_key_pressed(KEY_LEFT)))
+	var kb_y := (float(Input.is_key_pressed(KEY_W)) + float(Input.is_key_pressed(KEY_UP))) \
+			  - (float(Input.is_key_pressed(KEY_S)) + float(Input.is_key_pressed(KEY_DOWN)))
+	var kb_vec := Vector2(clamp(kb_x, -1.0, 1.0), clamp(kb_y, -1.0, 1.0))
+
+	# Prefer whichever source has greater magnitude.
+	if kb_vec.length_squared() > controller_vec.length_squared():
+		return kb_vec
+	return controller_vec
 
 
 # --- Movement ---
@@ -136,10 +151,21 @@ func _apply_horizontal_movement(delta: float) -> void:
 	var stick := _get_combined_stick()
 	var move_dir := Vector3.ZERO
 
-	if xr_camera and stick.length_squared() > 0.0:
-		var cam_basis := xr_camera.global_transform.basis
-		# stick.x = strafe right, stick.y = forward (positive y on stick = forward = -Z)
-		move_dir = cam_basis * Vector3(stick.x, 0.0, -stick.y)
+	if stick.length_squared() > 0.0:
+		if xr_camera:
+			var cam_basis := xr_camera.global_transform.basis
+			# stick.x = strafe right, stick.y = forward (positive y on stick = forward = -Z)
+			move_dir = cam_basis * Vector3(stick.x, 0.0, -stick.y)
+		else:
+			# Desktop fallback: no XR camera, so use a scene Camera3D if available,
+			# otherwise fall back to world-space axes (forward = -Z, right = +X).
+			var cam3d := get_viewport().get_camera_3d()
+			if cam3d:
+				var cam_basis := cam3d.global_transform.basis
+				move_dir = cam_basis * Vector3(stick.x, 0.0, -stick.y)
+			else:
+				# Pure world-space: stick.x → right (+X), stick.y → forward (-Z)
+				move_dir = Vector3(stick.x, 0.0, -stick.y)
 		move_dir.y = 0.0
 		move_dir = move_dir.normalized()
 
@@ -148,7 +174,9 @@ func _apply_horizontal_movement(delta: float) -> void:
 	var accel_factor := 1.0 if is_on_floor() else air_accel_factor
 
 	if move_dir != Vector3.ZERO:
-		var target_speed := minf(current_speed + acceleration * accel_factor * delta, max_speed)
+		# Set to full speed immediately for snappy platformer feel.
+		# Air movement is still reduced by accel_factor for better jump control.
+		var target_speed := max_speed * accel_factor if not is_on_floor() else max_speed
 		velocity.x = move_dir.x * target_speed
 		velocity.z = move_dir.z * target_speed
 		_facing_dir = move_dir

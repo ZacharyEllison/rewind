@@ -3,9 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://32x0i6lkun1h"
-path.etc2="res://.godot/imported/robot_bat_albedo.png-9ef10e99891fb731d7f44edacedfdd55.etc2.ctex"
+path.s3tc="res://.godot/imported/robot_bat_albedo.png-9ef10e99891fb731d7f44edacedfdd55.s3tc.ctex"
 metadata={
-"imported_formats": ["etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/robot_bat_albedo.png"
-dest_files=["res://.godot/imported/robot_bat_albedo.png-9ef10e99891fb731d7f44edacedfdd55.etc2.ctex"]
+dest_files=["res://.godot/imported/robot_bat_albedo.png-9ef10e99891fb731d7f44edacedfdd55.s3tc.ctex"]
 
 [params]
 

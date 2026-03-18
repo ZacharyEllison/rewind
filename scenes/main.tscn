@@ -2,12 +2,12 @@
 
 [ext_resource type="PackedScene" uid="uid://b0ymi1igjbglw" path="res://assets/models/robot_gobot.glb" id="1_o5qli"]
 [ext_resource type="PackedScene" uid="uid://clc5dre31iskm" path="res://addons/godot-xr-tools/xr/start_xr.tscn" id="2_0wfyh"]
-[ext_resource type="Script" path="res://assets/scripts/_systems/GameManager.gd" id="3_gm001"]
-[ext_resource type="Script" path="res://scenes/main.gd" id="5_main01"]
-[ext_resource type="Script" path="res://assets/scripts/_systems/RobotCharacterController.gd" id="4_rc001"]
+[ext_resource type="Script" uid="uid://bmvksidee84t7" path="res://assets/scripts/_systems/GameManager.gd" id="3_gm001"]
+[ext_resource type="Script" uid="uid://b3b33nyudaioo" path="res://assets/scripts/_systems/RobotCharacterController.gd" id="4_rc001"]
+[ext_resource type="Script" uid="uid://11mb7syk1qla" path="res://scenes/main.gd" id="5_main01"]
 [ext_resource type="PackedScene" uid="uid://level01main" path="res://scenes/level_01.tscn" id="6_lvl01"]
-[ext_resource type="Script" path="res://assets/scripts/_systems/GhostRobot.gd" id="7_ghost"]
-[ext_resource type="Script" path="res://assets/scripts/_systems/RobotAnimationController.gd" id="8_anim"]
+[ext_resource type="Script" uid="uid://ckhvuv3fy3bjd" path="res://assets/scripts/_systems/GhostRobot.gd" id="7_ghost"]
+[ext_resource type="Script" uid="uid://rd1drmo882nv" path="res://assets/scripts/_systems/RobotAnimationController.gd" id="8_anim"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0wfyh"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -25,11 +25,6 @@ glow_enabled = true
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_robot"]
 radius = 0.25
 height = 0.9
-
-[sub_resource type="StandardMaterial3D" id="Mat_ghost"]
-albedo_color = Color(0.5, 0.7, 1.0, 0.4)
-transparency = 1
-flags_transparent = true
 
 [node name="main" type="Node3D" unique_id=202694545]
 script = ExtResource("5_main01")
@@ -52,9 +47,10 @@ script = ExtResource("4_rc001")
 left_controller = NodePath("../XROrigin3D/LeftHandController")
 right_controller = NodePath("../XROrigin3D/RightHandController")
 xr_camera = NodePath("../XROrigin3D/XRCamera3D")
+jump_velocity = 5.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="RobotCharacter" unique_id=300000002]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
 shape = SubResource("CapsuleShape3D_robot")
 
 [node name="robot_gobot" parent="RobotCharacter" unique_id=2143264360 instance=ExtResource("1_o5qli")]
@@ -64,10 +60,11 @@ script = ExtResource("8_anim")
 script = ExtResource("7_ghost")
 
 [node name="robot_gobot" parent="GhostRobot" unique_id=500000002 instance=ExtResource("1_o5qli")]
-transparency = 0.6
-cast_shadow = 0
 
 [node name="StartXR" parent="." unique_id=1017752894 instance=ExtResource("2_0wfyh")]
+
+[node name="FallbackCamera" type="Camera3D" parent="." unique_id=600000001]
+transform = Transform3D(1, 0, 0, 0, 0.9396926, -0.34202015, 0, 0.34202015, 0.9396926, 0, 3, 8)
 
 [node name="XROrigin3D" type="XROrigin3D" parent="." unique_id=835933874]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4872775, 2.1425269)
@@ -80,6 +77,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4872775, 2.1425269)
 tracker = &"right_hand"
 show_when_tracked = true
 
+[node name="OpenXRRenderModel" type="OpenXRRenderModel" parent="XROrigin3D/RightHandController" unique_id=600000010]
+
 [node name="LeftHandController" type="XRController3D" parent="XROrigin3D" unique_id=439232952]
 tracker = &"left_hand"
 show_when_tracked = true
+
+[node name="OpenXRRenderModel" type="OpenXRRenderModel" parent="XROrigin3D/LeftHandController" unique_id=600000011]

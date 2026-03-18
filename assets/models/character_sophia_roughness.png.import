@@ -3,9 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cl2v06g23vajx"
-path.etc2="res://.godot/imported/character_sophia_roughness.png-b89b5060afebe80311cba01d9c2aef4b.etc2.ctex"
+path.s3tc="res://.godot/imported/character_sophia_roughness.png-b89b5060afebe80311cba01d9c2aef4b.s3tc.ctex"
 metadata={
-"imported_formats": ["etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/character_sophia_roughness.png"
-dest_files=["res://.godot/imported/character_sophia_roughness.png-b89b5060afebe80311cba01d9c2aef4b.etc2.ctex"]
+dest_files=["res://.godot/imported/character_sophia_roughness.png-b89b5060afebe80311cba01d9c2aef4b.s3tc.ctex"]
 
 [params]
 

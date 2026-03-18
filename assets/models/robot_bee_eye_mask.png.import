@@ -3,9 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b4gpaodsgppsa"
-path.etc2="res://.godot/imported/robot_bee_eye_mask.png-3477438fc1b834d8ade51c4d20dbcd59.etc2.ctex"
+path.s3tc="res://.godot/imported/robot_bee_eye_mask.png-3477438fc1b834d8ade51c4d20dbcd59.s3tc.ctex"
 metadata={
-"imported_formats": ["etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/robot_bee_eye_mask.png"
-dest_files=["res://.godot/imported/robot_bee_eye_mask.png-3477438fc1b834d8ade51c4d20dbcd59.etc2.ctex"]
+dest_files=["res://.godot/imported/robot_bee_eye_mask.png-3477438fc1b834d8ade51c4d20dbcd59.s3tc.ctex"]
 
 [params]
 

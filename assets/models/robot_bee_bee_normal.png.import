@@ -3,9 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://8q31iy3dsuav"
-path.etc2="res://.godot/imported/robot_bee_bee_normal.png-0a0937afa6734c8c43ae9fecba12f3ee.etc2.ctex"
+path.s3tc="res://.godot/imported/robot_bee_bee_normal.png-0a0937afa6734c8c43ae9fecba12f3ee.s3tc.ctex"
 metadata={
-"imported_formats": ["etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/robot_bee_bee_normal.png"
-dest_files=["res://.godot/imported/robot_bee_bee_normal.png-0a0937afa6734c8c43ae9fecba12f3ee.etc2.ctex"]
+dest_files=["res://.godot/imported/robot_bee_bee_normal.png-0a0937afa6734c8c43ae9fecba12f3ee.s3tc.ctex"]
 
 [params]
 

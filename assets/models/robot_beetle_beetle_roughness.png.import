@@ -3,9 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://corjpi8xchq5e"
-path.etc2="res://.godot/imported/robot_beetle_beetle_roughness.png-fbc39673728e9ac87ccdbfa4b21f5292.etc2.ctex"
+path.s3tc="res://.godot/imported/robot_beetle_beetle_roughness.png-fbc39673728e9ac87ccdbfa4b21f5292.s3tc.ctex"
 metadata={
-"imported_formats": ["etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/robot_beetle_beetle_roughness.png"
-dest_files=["res://.godot/imported/robot_beetle_beetle_roughness.png-fbc39673728e9ac87ccdbfa4b21f5292.etc2.ctex"]
+dest_files=["res://.godot/imported/robot_beetle_beetle_roughness.png-fbc39673728e9ac87ccdbfa4b21f5292.s3tc.ctex"]
 
 [params]
 

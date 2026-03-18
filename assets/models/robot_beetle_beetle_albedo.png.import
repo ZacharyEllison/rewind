@@ -3,9 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://csa51ucdrw355"
-path.etc2="res://.godot/imported/robot_beetle_beetle_albedo.png-c7212130b3b5280207afed888e3c7694.etc2.ctex"
+path.s3tc="res://.godot/imported/robot_beetle_beetle_albedo.png-c7212130b3b5280207afed888e3c7694.s3tc.ctex"
 metadata={
-"imported_formats": ["etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/robot_beetle_beetle_albedo.png"
-dest_files=["res://.godot/imported/robot_beetle_beetle_albedo.png-c7212130b3b5280207afed888e3c7694.etc2.ctex"]
+dest_files=["res://.godot/imported/robot_beetle_beetle_albedo.png-c7212130b3b5280207afed888e3c7694.s3tc.ctex"]
 
 [params]
 
