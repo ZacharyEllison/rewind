@@ -2,16 +2,20 @@
 
 extends Node
 
-# Signals
+## How often (in seconds) the robot's position is sampled during recording.
+## GhostRobot.SAMPLE_INTERVAL must match this value.
+const RECORD_INTERVAL: float = 0.1
+
+## Signals
 signal robot_moved
 signal recording_started(count: int, duration: float)
 signal recording_stopped
-signal rewinding_started(duration: float)
+signal rewinding_started(position_count: int)
 signal rewind_completed
 signal attempt_completed
 signal sand_crystal_collected(count: int)
 
-# Game state
+## Game state
 const MAX_ATTEMPT_TIME: float = 30.0
 const CRYSTAL_SAND_VALUE: float = 30.0
 
@@ -22,13 +26,17 @@ var is_rewinding: bool = false
 var is_game_paused: bool = false
 var current_level: int = 1
 
-# Sand system
+## Sand system
 var sand_crystal_count: int = 1
-var max_rewind_seconds: float = 30.0
+var max_rewind_seconds: float = 0.0
 
-# References
+## References
 var robot_node: Node
 var recorded_positions: Array[Vector3] = []
+
+## Elapsed time since the last position sample was recorded.
+## Used instead of floating-point modulo to reliably fire at RECORD_INTERVAL.
+var _record_accumulator: float = 0.0
 
 func _ready() -> void:
     _initialize_game()
@@ -37,7 +45,6 @@ func _ready() -> void:
 func _initialize_game() -> void:
     current_attempt_count = 0
     sand_crystal_count = 1
-    max_rewind_seconds = 30.0
     _update_sand_system()
 
 func _update_sand_system() -> void:
@@ -49,21 +56,21 @@ func _update_sand_system() -> void:
         9: 5
     }
     
-    var crystals: int = level_crystals.get(current_level, 1)
-    sand_crystal_count = crystals
-    max_rewind_seconds = CRYSTAL_SAND_VALUE * float(crystals)
+    sand_crystal_count = level_crystals.get(current_level, 1)
+    max_rewind_seconds = CRYSTAL_SAND_VALUE * float(sand_crystal_count)
     
     print("Sand System - Level: %d, Crystals: %d, Max Rewind: %0.f seconds" % [
         current_level, sand_crystal_count, max_rewind_seconds
     ])
 
-# Recording functions
+## Recording functions
 func start_recording() -> void:
     is_recording = true
     current_attempt_count += 1
     current_attempt_duration = 0.0
+    _record_accumulator = 0.0
     recorded_positions.clear()
-    
+
     emit_signal("recording_started", current_attempt_count, MAX_ATTEMPT_TIME)
     print("Recording started - Attempt #%d, Max time: %0.fs" % [
         current_attempt_count, MAX_ATTEMPT_TIME
@@ -73,9 +80,14 @@ func _process(delta: float) -> void:
     if is_recording and robot_node:
         current_attempt_duration += delta
         
-        # Record robot position at intervals
+        # Record robot position at fixed intervals using an accumulator.
+        # The old approach (current_attempt_duration % RECORD_INTERVAL < delta)
+        # was unreliable because floating-point modulo can skip the threshold
+        # between frames when delta is large or accumulated precision is low.
         if current_attempt_duration < MAX_ATTEMPT_TIME:
-            if current_attempt_duration % 0.1 < delta:
+            _record_accumulator += delta
+            if _record_accumulator >= RECORD_INTERVAL:
+                _record_accumulator -= RECORD_INTERVAL
                 recorded_positions.append(robot_node.global_position)
         
         # Auto-stop at max time
@@ -92,13 +104,14 @@ func stop_recording() -> void:
     emit_signal("recording_stopped")
 
 func trigger_rewind() -> void:
-    if !is_recording && recorded_positions.is_empty():
-        print("ERROR: Cannot rewind - no recording or already rewinding")
+    # Guard: block if already rewinding (prevents double-trigger) or nothing to play back.
+    if is_rewinding or recorded_positions.is_empty():
+        print("ERROR: Cannot rewind - already rewinding or no positions recorded")
         return
-    
+
     is_recording = false
     is_rewinding = true
-    
+
     emit_signal("rewinding_started", recorded_positions.size())
     print("Rewind triggered - Playback %d positions" % recorded_positions.size())
 
@@ -106,6 +119,7 @@ func start_new_attempt() -> void:
     is_rewinding = false
     is_recording = false
     current_attempt_duration = 0.0
+    _record_accumulator = 0.0
     recorded_positions.clear()
     _reset_robot_position()
     
@@ -121,8 +135,6 @@ func retry_current_attempt() -> void:
 func _reset_robot_position() -> void:
     if robot_node:
         robot_node.global_position = Vector3.ZERO
-        # Also reset rotation if needed
-        # robot_node.global_rotation_degrees = Vector3.ZERO
 
 func set_robot(node: Node) -> void:
     robot_node = node
@@ -140,6 +152,12 @@ func is_recording_active() -> bool:
 
 func is_rewinding_active() -> bool:
     return is_rewinding
+
+## Called by GhostRobot (via main.gd) when playback finishes.
+## Clears the rewinding flag and fires rewind_completed so listeners can react.
+func complete_rewind() -> void:
+    is_rewinding = false
+    emit_signal("rewind_completed")
 
 func get_max_rewind_seconds() -> float:
     return max_rewind_seconds

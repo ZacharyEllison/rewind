@@ -1,76 +1,54 @@
-# Project Status - 2024-03-16
-
-## Current State
-
-### ✅ Completed
-1. **Project Setup**
-   - Git initialized and configured
-   - project.godot (Godot 4.6 generated)
-   - scene_root/main.tscn with XR Camera setup
-
-2. **Asset Import**
-   - ✅ 6 GDQuest robot models imported to `assets/models/`
-   - ✅ robot_gobot.glb selected as main character
-
-3. **Scene Structure Created**
-   - `project_root/main.tscn` with overhead robot view
-   - VirtualCamera3D at 25° angle for Astro Bot perspective
-   - GameManager attached to root node
-
-4. **Core Scripts Created**
-   - `assets/scripts/_systems/GameManager.gd` (150 lines)
-   - `assets/scripts/_systems/RobotCharacterController.gd`
-   - GameManager handles: recording, sand crystals, rewind flow
-   - RobotCharacterController handles: movement via CharacterBody3D
-
-### ⏳ Pending
-1. **XR Tools Setup** - Import from Godot Asset Library
-2. **Hourglass Physics Object** - RigidBody3D for flip detection
-3. **Time Playback System** - Create ghost robot instances for rewind
-4. **Level Template** - Base level scene
-5. **UI** - Sand counter, pause menu, retry button
-6. **Crystal Collection** - Trigger sand duration increase
-
-### 📝 Notes
-- `project.godot` regenerated (was corrupted, now reset to basics)
-- All scenes use Godot 4.6 format (config_version=5)
-- Robot movement extends CharacterBody3D for XR compatibility
-- Input actions mapped: w/s/a/d for robot movement
+# Project Status — Rewind Hourglass
+Last updated: 2026-03-18
 
 ---
 
-## Scene Hierarchy
+## What Is Built
 
-```
-Main (GameManager.gd)
-├── PlayerCamera (VirtualCamera3D)
-│   └── RobotView (Node3D, -90° rotation)
-│       └── Robot (Node3D)
-│           └── RobotController (RobotCharacterController.gd)
-```
+### Core Systems (all scripts in `assets/scripts/_systems/`)
 
-## Scripts Overview
+| Script | Status | Notes |
+|--------|--------|-------|
+| `GameManager.gd` | Working | Recording, rewind state machine, sand crystal logic, respawn |
+| `RobotCharacterController.gd` | Working | CharacterBody3D, gravity, jump, VR joystick + desktop WASD/Space, auto-starts recording on ready |
+| `GhostRobot.gd` | Working | Interpolated position playback from recorded Array[Vector3], emits `playback_finished` |
+| `RobotAnimationController.gd` | Working | Drives AnimationPlayer (idle/walk/run/jump/fall) from velocity; graceful fallback if clips missing |
 
-### GameManager.gd
-- Core game state management
-- Recording: 30 second attempts
-- Sand system: crystals increase max rewind time
-- Signals: recording_started, recording_stopped, rewind_started, etc.
+### Scenes
 
-### RobotCharacterController.gd
-- Extends CharacterBody3D
-- Movement relative to camera view
-- Records positions every 0.1s
-- Automatic recording (30s max)
+| Scene | Status | Notes |
+|-------|--------|-------|
+| `scenes/main.tscn` | Working | GameManager + RobotCharacter + GhostRobot wired together via `scenes/main.gd` |
+| `scenes/level_01.tscn` | Exists | Basic level geometry; actual contents not yet verified |
+| `project_root/main.tscn` | Exists | Older entry point — may be redundant with `scenes/main.tscn` |
+
+### Plugins / Addons
+- `addons/godot-xr-tools` — installed (full toolkit: pickup, snap zones, hands, staging, etc.)
+- `addons/godot-xr-toggle` — installed
+- `addons/xr-simulator` — installed (desktop XR simulation)
+
+### Input
+- VR: left or right thumbstick (dominant magnitude wins), A/X = jump, B/Y = rewind trigger
+- Desktop: WASD movement, Space = jump, Escape = rewind trigger
 
 ---
 
-## Next Steps
+## What Is Missing (Blocking for Jam Submission)
 
-1. **Import XR Tools** from Godot Asset Library
-2. **Create Hourglass object** with physics
-3. **Set up level template** (Level 1 basic)
-4. **Add UI elements** (sand counter, pause button)
-5. **Test basic gameplay** - Move robot, observe recording
+1. **Hourglass object** — no physical hourglass exists; rewind is triggered by a controller button. The core VR mechanic (grab + flip) is not implemented.
+2. **Goal / level-complete detection** — no Area3D goal trigger, no level-complete signal, no scene transition.
+3. **Crystal pickups** — `add_sand_crystal()` exists in GameManager but nothing calls it. No Area3D pickup zones in any scene.
+4. **HUD / UI** — no sand timer display, no attempt counter, no level-complete screen, no retry button visible to player.
+5. **Audio** — nothing. No SFX, no music.
+6. **Levels 2–10** — only `level_01.tscn` exists.
+7. **Level select / main menu** — no scenes exist for these.
+8. **Ghost robot visual** — GhostRobot.gd has no semi-transparent mesh child confirmed in scene; needs verification and material setup.
 
-Ready for development! 🚀
+---
+
+## Known Issues / Gaps
+
+- `project_root/main.tscn` and `scenes/main.tscn` may conflict as entry points — confirm which is active in `project.godot`.
+- GameManager's position recording uses `current_attempt_duration % 0.1 < delta` — this is imprecise at variable framerates. Low priority but worth noting.
+- `_update_sand_system()` sets crystals based on level number at init, not from actual in-game collection — the two code paths (level-lookup vs. `add_sand_crystal()`) need to be reconciled.
+- Ghost robot rotation is not recorded — ghost will always face a fixed direction during playback.

@@ -1,403 +1,101 @@
-# 🎮 Rewind Hourglass - XR Game Jam Project
-
-## 📋 Project Overview
-
-**IMPORTANT:** Before making any changes, check [AGENTS.md](AGENTS.md) for context reference rules and the project.godot lesson.
-
-## 📦 Project Structure
-
-| Property | Value |
-|----------|-------|
-| **Game Jam Theme** | Rewind |
-| **Engine** | Godot 4.x |
-| **Platforms** | Quest 3 (standalone), PCVR |
-| **Dev Duration** | 1 week (solo) |
-| **Play Mode** | Seated XR |
-| **Perspective** | First-person hands, overhead robot view (Astro Bot style) |
-| **Input** | Controllers only (no hand tracking) |
-| **Core Mechanic** | Hourglass flip = rewind time (sideways = pause) |
-| **Art Style** | Low-poly (Kenny Assets) |
+# Project Plan — Rewind Hourglass
+Game Jam Entry | Theme: Rewind | Engine: Godot 4.6 | Target: Quest 3 + PCVR (OpenXR)
 
 ---
 
-## 🎯 Core Gameplay Loop
+## Game Summary
+
+Seated XR platformer. Player watches a small robot from above (Astro Bot perspective). Each attempt records the robot's path. Pressing the rewind trigger replays the ghost of that path. The player uses that knowledge to guide the robot differently on the next attempt and reach the level goal.
+
+Core loop: Move robot → trigger rewind → watch ghost → retry with new knowledge → reach goal.
+
+---
+
+## Priorities (Jam Context: Playable Beats Polished)
+
+### Immediate — needed before the game is playable at all
+
+1. **Confirm scene entry point**
+   - Verify `project.godot` main scene is `scenes/main.tscn`. Remove or archive `project_root/main.tscn` if it is the old one.
+
+2. **Ghost robot mesh**
+   - Add `robot_gobot` mesh as a child of the `GhostRobot` node with a semi-transparent material (albedo alpha ~0.4, transparency enabled).
+   - Verify ghost appears and moves during rewind playback.
+
+3. **Goal trigger for level_01**
+   - Add an Area3D at the destination in `level_01.tscn`.
+   - On `body_entered`, signal GameManager → show level-complete state → load next level (or restart for now).
+
+4. **Crystal pickup trigger**
+   - Add an Area3D crystal in `level_01.tscn`.
+   - On `body_entered`, call `game_manager.add_sand_crystal()`.
+   - Reconcile `_update_sand_system()` (level-lookup at init) with `add_sand_crystal()` (incremental) — pick one approach and remove the other.
+
+5. **Minimal HUD (Label3D or SubViewport)**
+   - Attempt number, current rewind-time budget (crystals collected × 30s), and a "REWIND / RETRY" prompt so the player knows what the button does.
+   - Does not need to be beautiful — a Label3D floating in world space is fine.
+
+---
+
+### Short-term — needed before a full playthrough exists
+
+6. **Hourglass object (VR mechanic)**
+   - Create `Hourglass.tscn`: RigidBody3D + grab point (XR Tools `pickable.tscn` as base).
+   - Detect flip: when the hourglass local Y-axis flips past ~90° from upright, fire `trigger_rewind()` on GameManager.
+   - Replace the controller-button rewind trigger with this (or keep button as fallback).
+
+7. **Ghost rotation recording**
+   - Extend GameManager recording to store `Array[Basis]` or `Array[float]` (Y-rotation only) alongside positions.
+   - Apply in `GhostRobot._physics_process` so the ghost faces the direction it was moving.
+
+8. **Levels 2–3 (minimum viable content)**
+   - Duplicate `level_01.tscn`, modify geometry and obstacle layout.
+   - Level 2: introduce a button the ghost must press to raise a platform.
+   - Level 3: longer path, second crystal.
+
+9. **Level transition**
+   - On goal reached: fade out, load next level scene, reset GameManager state.
+   - A simple `get_tree().change_scene_to_file()` is sufficient.
+
+10. **Retry button (in-world)**
+    - A grabbable or pokeable button (XR Tools `interactable_area_button`) that calls `game_manager.retry_current_attempt()`.
+
+---
+
+### Stretch — if time permits
+
+- Levels 4–10 (template: alternate crystal / no-crystal levels; crystals at 1, 3, 5, 7, 9)
+- Audio: single ambient loop + 3 SFX (footstep, crystal collect, level complete)
+- Main menu scene
+- Level select scene
+- Quest 3 export and on-device test (120Hz, confirm no hitches during ghost playback)
+
+---
+
+## Architecture Reference (current)
 
 ```
-[Attempt 1]
-Player controls Robot → walks for 30 seconds → collects crystal (optional) → flips hourglass
-	↓
-[RECORDING PHASE]
-Timestamp: t=0 to t=30 | Robot position saved every frame/keyframe
-	↓
-[REWIND PHASE]
-Hourglass flipped → Past-Bot instance plays back recorded path (uncontrollable)
-	↓
-[ATTEMPT 2]
-Player controls Robot AGAIN → uses knowledge from Past-Bot's path → reaches goal
-    ↓
-[RETRY BUTTON]
-Can restart current attempt anytime without resetting level progression
+scenes/main.tscn  (entry point)
+  GameManager (GameManager.gd)
+  RobotCharacter (RobotCharacterController.gd + CharacterBody3D)
+    robot_gobot (mesh)
+      RobotAnimationController.gd
+  GhostRobot (GhostRobot.gd + Node3D)
+    [needs: robot_gobot mesh, semi-transparent material]
 ```
 
----
-
-## 📦 Project Structure
-
-```
-/storage/emulated/0/Code/rewind/
-├── project.godot                 # Project configuration
-├── PROJECT_PLAN.md               # This document
-├── README.md                     # Quick start instructions
-├── addons/                       # External templates
-│   └── xr_tools/                # Godot XR Tools package
-├── assets/
-│   ├── audio/                   # SFX/music (placeholder for now)
-│   ├── models/                  # 3D models
-│   │   ├── robot_gobot.glb      # ✅ Main robot (GDQuest asset)
-│   │   ├── ...                  # Alternative robots available
-│   │   ├── ROBOT_ASSETS_README.md
-│   ├── scenes/                  # Godot scene files
-│   │   ├── _base/              # Shared base scenes (level_template, robot, hourglass)
-│   │   ├── level_01.tscn       # Level 1: Robot to crystal (baseline)
-│   │   ├── level_02.tscn       # Level 2: Button + platform lift
-│   │   ├── level_03.tscn       # ...
-│   │   ├── level_04.tscn       # ...
-│   │   ├── level_05.tscn       # Level 5: Crystal #2
-│   │   ├── level_06.tscn       # ...
-│   │   ├── level_07.tscn       # Level 7: Crystal #3
-│   │   ├── level_08.tscn       # ...
-│   │   ├── level_09.tscn       # Level 9: Crystal #4
-│   │   ├── level_10.tscn       # Level 10: Final level
-│   │   ├── _ui/                # UI scenes
-│   │   ├── main_menu.tscn      # Title screen
-│   │   ├── level_select.tscn   # Level selection
-│   │   ├── game_over.tscn      # Level complete/retry screen
-│   │   ├── pause_menu.tscn     # Pause options
-│   ├── scripts/                 # GDScript files
-│   │   ├── _base/
-│   │   │   ├── Robot.gd
-│   │   │   ├── Hourglass.gd
-│   │   │   ├── TimeRecorder.gd
-│   │   │   ├── TimePlayback.gd
-│   │   │   └── SandSystem.gd
-│   │   ├── _systems/
-│   │   │   ├── XRInputHandler.gd
-│   │   │   ├── LevelManager.gd
-│   │   │   ├── GameState.gd
-│   │   └── _ui/
-│   │       ├── UIManager.gd
-│   │       ├── SandCounter.gd
-│   │       └── PauseMenu.gd
-│   ├── shaders/                  # Custom shaders
-│   └── textures/                # UI textures
-├── project_root/                 # Runtime scenes
-│   └── main.tscn                # Entry point
-└── .git/                        # Git repository
-```
+Signal flow:
+- RobotCharacterController detects input → calls `GameManager.stop_recording()` + `trigger_rewind()`
+- GameManager emits `rewinding_started` → main.gd starts `GhostRobot.start_playback()`
+- GhostRobot emits `playback_finished` → main.gd sets `GameManager.is_rewinding = false` + emits `rewind_completed`
+- Player presses rewind again (after ghost finishes) → `start_new_attempt()` + `start_recording()`
 
 ---
 
-## 🤖 Robot Character Assets - CURRENT STATE
+## Constraints
 
-### ✅ Primary Choice: **robot_gobot.glb**
-- **Source:** GDQuest Godot 4 3D Characters Demo
-- **Repository:** [github.com/gdquest-demos/godot-4-3D-Characters](https://github.com/gdquest-demos/godot-4-3D-Characters)
-- **Local Path:** `assets/models/robot_gobot.glb`
-- **File Size:** 1.4MB (optimal for Quest 3 performance)
-- **Features:**
-  - ✅ Classic robot appearance - perfect for "little robot" concept
-  - ✅ Cylindrical body + wheels - easy to identify in overhead view
-  - ✅ Recognizable robot silhouette from all angles
-- **Usage:** Main robot character, player-controlled during each attempt
-
-### Alternative Robots Available
-| Robot | Size | Description |
-|-------|----|--------|
-| robot_gdbot | 3.3MB | Box-shaped robot alternative |
-| robot_beetle | 1.8MB | Insect-like hexapod robot |
-| robot_bee | 2.8MB | Bee-inspired robot |
-| robot_bat | 668KB | Flying bat robot (specialized) |
-
-### Asset Documentation
-- **Imported to project:** ✅ All robot GLB files in `assets/models/`
-- **Documentation:** `assets/models/ROBOT_ASSETS_README.md`
-- **Import instruction:** `File → Import... → Select robot_gobot.glb → Import as Scene`
-
-### ⚠️ Kenny Assets - SKIPPED FOR NOW
-- **Decision:** No Kenny assets needed at this time
-- **Reason:** We have robot assets, can create custom low-poly props later
-- **Focus:** Start development with what we have
-
----
-
-## 🎮 Core Systems Architecture
-
-### 1. Hourglass System
-```gdscript
-# Hourglass.gd
-extends RigidBody3D
-
-# Signals
-signal flip_detected
-signal sand_amount_updated(amount)
-
-# Core functions
-func trigger_rewind():
-    TimeSystem.start_rewind()
-    
-func trigger_pause():
-    TimeSystem.pause_rewind()
-    
-func get_rotation_axis() -> String:
-    # Returns "X", "Y", or "Z" based on flip direction
-    pass
-```
-
-### 2. Time Recorder
-```gdscript
-# TimeRecorder.gd
-extends Node
-
-var recorded_positions: Array[Vector3] = []
-var recorded_timestamps: Array[float] = []
-var recording_active: bool = false
-
-func start_recording():
-    recorded_positions.clear()
-    recorded_timestamps.clear()
-    recording_active = true
-    
-func record_frame(position: Vector3, delta: float):
-    if recording_active:
-        recorded_positions.append(position)
-        recorded_timestamps.append(Time.get_ticks_usec())
-        
-func generate_past_bot_instance() -> PastBot:
-    var future = load("res://assets/models/past_bot.tscn").instantiate()
-    future.set_recorded_path(recorded_positions)
-    return future
-```
-
-### 3. Sand Resource System
-```gdscript
-# SandSystem.gd
-extends Node
-
-var max_rewind_seconds: float = 30.0
-var sand_crystal_count: int = 1
-var recorded_rewind_times: Array[float] = []
-
-const CRYSTAL_SAND_VALUE = 30  # Each crystal adds 30 seconds
-
-const LEVEL_CRYSTALS = {
-    1: true,  # Level 1: Crystal #1
-    2: false,
-    3: true,  # Level 3: Crystal #2
-    4: false,
-    5: true,  # Level 5: Crystal #3
-    6: false,
-    7: true,  # Level 7: Crystal #4
-    8: false,
-    9: true,  # Level 9: Crystal #5
-    10: false
-}
-
-func collect_crystal(level: int):
-    if LEVEL_CRYSTALS.get(level, false):
-        sand_crystal_count += 1
-        max_rewind_seconds = CRYSTAL_SAND_VALUE * sand_crystal_count
-
-func get_available_rewind_time() -> float:
-    # Can rewind up to max_rewind_seconds per attempt
-    return min(max_rewind_seconds, recorded_rewind_times.size() > 0 ? recorded_rewind_times.back() : max_rewind_seconds)
-```
-
-### 4. Robot Movement System
-```gdscript
-# Robot.gd
-extends CharacterBody3D
-
-var current_position: Vector3 = Vector3.ZERO
-
-func start_record():
-    # Begin recording position timestamps
-    pass
-    
-func record_movement(delta: float):
-    # Add current position to recorded path
-    TimeRecorder.record_frame(current_position, delta)
-    
-func stop_record():
-    # Prepare for rewind playback
-    TimeRecorder.generate_past_bot_instance()
-```
-
----
-
-## 🗓️ Development Timeline (1 Week)
-
-| Day | Priority | Tasks | Notes |
-|-----|----------|-------|-----|
-| **Day 1** | P0 | Project setup, XR Tools import, Kenny assets, basic VR interaction, hourglass grab physics | Get core VR interaction working |
-| **Day 2** | P0 | Robot movement, level framework, crystal collection, sand counter (number) | Functional gameplay loop |
-| **Day 3** | P1 | Time recorder/playback system, past-bot instance, hourglass flip detection | Core rewind mechanic |
-| **Day 4** | P1 | Level 2 button mechanic, platform lift system, retry mechanism | First puzzle level |
-| **Day 5-6** | P2 | Create levels 3-10 with reusing templates (varied obstacles, crystals at 1,3,5,7,9) | Complete all levels |
-| **Day 7** | P3 | UI polish, tutorial hints, bug fixes, Quest 3 optimization, build & test | Polish & publish |
-
----
-
-## 🎨 Asset Plan (Kenny Assets)
-
-| Asset Pack | Usage | Source |
-|-----------|-------|--------|
-| Low Poly Characters | Robot base model | [kenney.nl](https://kenney.nl/assets) |
-| Low Poly Environments | Level floors, platforms | Download & filter by "VR" |
-| Low Poly Props | Crystals, buttons, obstacles | [kenney.nl](https://kenney.nl/assets) |
-| Kenny XR Hands | Controller visuals | Built-in to XR Tools |
-| Kenny UI Icons | Sand counter icons | [kenney.nl](https://kenney.nl/assets) |
-
----
-
-## ⚙️ Technical Specs & Optimization
-
-### Quest 3 Performance
-| Concern | Target | Solution |
-|---------|--------|----------|
-| **Frame Rate** | 120Hz (90Hz fallback) | Stable VR targeting |
-| **Polygon Count** | <5K per static scene | Low-poly, baked lighting |
-| **Shadow Maps** | None or 1024² | No dynamic shadows where possible |
-| **Physics** | Single rigid body | Hourglass only (robot on CharacterBody3D) |
-| **Memory** | <100MB | Past bots only exist during rewind |
-| **Texture Size** | 512x512 max | Compressed KTX2 textures |
-| **Draw Calls** | <100 per frame | Batching, LODs |
-
-### Time Recording Optimization
-- Record keyframes every **0.1 seconds** instead of every frame
-- Store as float/Vector3 packed (6 bytes per frame)
-- Limit recording duration to **max_rewind_seconds**
-- Clear recorded data after successful playback
-
----
-
-## 🎭 Level Design Template
-
-```gdscript
-# Level Template Pattern (shared across all 10 levels)
-# ┌─────────────────────────────────────┐
-# │  STARTING AREA                      │
-# │     Robot spawn point               │
-# │     Hourglass spawn point           │
-# └─────────────────────────────────────┘
-#              │
-#              ▼
-# ┌─────────────────────────────────────┐
-# │  INTERMEDIATE OBSTACLES             │
-# │     Platform gaps                   │
-# │     Static obstacles                │
-│  Buttons/Pressure plates (levels 2+)  │
-# └─────────────────────────────────────┘
-#              │
-#              ▼
-# ┌─────────────────────────────────────┐
-# │  CRYSAL PLATFORM (if applicable)    │
-# │     Collect crystal                 │
-# │     Increases max rewind time       │
-# └─────────────────────────────────────┘
-#              │
-#              ▼
-# ┌─────────────────────────────────────┐
-# │  DESTINATION PLATFORM               │
-# │     Reach goal → Level Complete     │
-# └─────────────────────────────────────┘
-```
-
----
-
-## ⚙️ XR Tools Plugin Setup
-
-### Recommended Godot XR Tools Packages
-1. **XR Interaction Toolkit (XRI)** - Built into Godot 4.x
-2. **XR Plugin Management** - For Quest/PCVR support
-3. **XR Hands** - Controller rendering with grip/flip
-4. **XR Tools (Custom)** - For Quest 3 optimized templates
-
-### Configuration Steps
-```bash
-# 1. Download Godot XR Tools repository
-git clone https://github.com/godotxrtools/godot-xr-tools.git addons/xr_tools
-
-# 2. Enable plugins in project settings
-# - Enable "XR Tools - OpenXR", "XRI - Unity", etc.
-
-# 3. Configure OpenXR Extension
-# - Enable OpenXR in project settings
-# - Add "Oculus Quest 2/XR Plugin" for Quest
-# - Add "PCVR Plugin" for Unity/OpenXR on PC
-```
-
----
-
-## 📊 Progression & Game Loop
-
-```
-Level 1: Tutorial
-└─ Robot walks to crystal (30s rewind time)
-└─ Crystal collected → sand crystal count = 2
-
-Level 2: Button Mechanic
-└─ Past-bot must press button
-└─ Robot #2 uses lifted platform to reach goal
-└─ No crystal this level
-
-Level 3: Extended Rewind
-└─ Longer path + obstacle
-└─ Crystal collected → sand crystal count = 3
-
-... Repeat pattern ...
-
-Levels with Crystals: 1, 3, 5, 7, 9
-Levels without Crystals: 2, 4, 6, 8, 10 (10 = final challenge)
-```
-
----
-
-## 🎯 Success Criteria (Jam Completion)
-
-| Criteria | Status |
-|----------|--------|
-| ✅ Hourglass grab & flip interaction | Core VR mechanic |
-| ✅ Time recording system | Record robot path for 30s |
-| ✅ Past-bot playback | Uncontrollable instance replays path |
-| ✅ Sand counter (visual pieces) | 1 → 5 sand pieces max |
-| ✅ 10 levels with varied puzzles | Template-based, crystals at 1,3,5,7,9 |
-| ✅ Retry button for any attempt | No fail state, just retry |
-| ✅ Quest 3 performance stable | 120Hz target |
-| ✅ PCVR support | OpenXR dual-target |
-
----
-
-## 🚀 Next Steps
-
-1. **Set up project**: Configure Godot 4.x with OpenXR
-2. **Import XR Tools**: Download and configure the XR Tools plugin
-3. **Import Kenny Assets**: Download and set up low-poly models
-4. **Day 1**: Build core hourgrab & flip interaction
-5. **Day 2**: Implement robot movement & sand counter
-6. **Day 3**: Build time recording/playback system
-7. **Day 4**: Add button mechanic & platform lift
-8. **Day 5-6**: Create levels 3-10 with reusing template
-9. **Day 7**: Polish, test, optimize, build
-
-## 📝 Notes & Considerations
-
-- **No fail state**: Robots don't die, can retry anytime
-- **30s rewind**: Each attempt can record up to 30s of robot movement
-- **One robot at a time**: Can't control past-bot, only learn from it
-- **Seated VR**: Don't over-exaggerate player movement
-- **Controller-only**: No hand tracking required
-- **Low-poly**: Use Kenny assets for speed, no custom modeling
-
----
-
-**Ready to start development? Let's begin with Day 1 tasks!**
+- No fail state — robot respawns on fall, player can always retry
+- 30s max attempt time per crystal (1 crystal = 30s, 5 crystals = 150s)
+- Controller-only input (no hand tracking required)
+- Seated VR — do not require standing or room-scale
+- Quest 3 performance target: 90Hz minimum, 120Hz preferred

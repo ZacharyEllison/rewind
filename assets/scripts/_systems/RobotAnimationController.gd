@@ -13,8 +13,6 @@ extends Node3D
 var _anim_player: AnimationPlayer
 var _body: CharacterBody3D
 var _current_anim: String = ""
-# Track previous on-floor state for jump/land detection
-var _was_on_floor: bool = true
 
 
 func _ready() -> void:
@@ -51,7 +49,6 @@ func _physics_process(_delta: float) -> void:
 		desired = "idle"
 
 	_play(desired)
-	_was_on_floor = on_floor
 
 
 func _play(anim_name: String) -> void:
@@ -59,9 +56,9 @@ func _play(anim_name: String) -> void:
 		return
 	# Try exact name first, then fallbacks
 	var candidates := _fallbacks(anim_name)
-	for name in candidates:
-		if _anim_player.has_animation(name):
-			_anim_player.play(name)
+	for candidate in candidates:
+		if _anim_player.has_animation(candidate):
+			_anim_player.play(candidate)
 			_current_anim = anim_name
 			return
 	# If nothing matched, stay on current animation

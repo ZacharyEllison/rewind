@@ -11,7 +11,7 @@ signal playback_finished
 var _positions: Array[Vector3] = []
 var _index: int = 0
 var _active: bool = false
-# Seconds between recorded samples (matches GameManager recording interval)
+## Seconds between recorded samples — must match GameManager.RECORD_INTERVAL.
 const SAMPLE_INTERVAL: float = 0.1
 var _elapsed: float = 0.0
 

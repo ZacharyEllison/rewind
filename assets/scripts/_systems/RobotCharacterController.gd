@@ -29,6 +29,11 @@ extends CharacterBody3D
 @export var fall_threshold: float = -10.0
 @export var spawn_position: Vector3 = Vector3(0.0, 0.5, 0.0)
 
+@export_group("Visuals")
+## Assign the robot mesh child in the Inspector to avoid a hard-coded node name lookup.
+## If left empty the controller falls back to searching for a child named "robot_gobot".
+@export var robot_mesh: Node3D
+
 var _gravity: Vector3
 var _facing_dir: Vector3 = Vector3.FORWARD
 var _rewind_was_pressed: bool = false
@@ -51,7 +56,7 @@ func _physics_process(delta: float) -> void:
 	_check_fall()
 	_check_rewind_trigger()
 	# Block movement during rewind playback
-	if game_manager and game_manager.is_rewinding:
+	if game_manager and game_manager.is_rewinding_active():
 		move_and_slide()
 		return
 	if not is_on_floor():
@@ -76,11 +81,11 @@ func _check_rewind_trigger() -> void:
 	# Edge-detect: only fire on the frame the button first goes down
 	if pressed and not _rewind_was_pressed:
 		if game_manager:
-			if game_manager.is_recording:
+			if game_manager.is_recording_active():
 				game_manager.stop_recording()
 				# Playback is driven by main.gd via the rewinding_started signal
 				game_manager.trigger_rewind()
-			elif not game_manager.is_rewinding:
+			elif not game_manager.is_rewinding_active():
 				# Start a fresh attempt after rewind has finished
 				game_manager.start_new_attempt()
 				game_manager.start_recording()
@@ -150,8 +155,9 @@ func _apply_horizontal_movement(delta: float) -> void:
 	else:
 		var new_speed := maxf(current_speed - deceleration * accel_factor * delta, 0.0)
 		if current_speed > 0.0:
-			velocity.x = (horizontal / current_speed).x * new_speed
-			velocity.z = (horizontal / current_speed).z * new_speed
+			var horizontal_dir := horizontal / current_speed
+			velocity.x = horizontal_dir.x * new_speed
+			velocity.z = horizontal_dir.z * new_speed
 		else:
 			velocity.x = 0.0
 			velocity.z = 0.0
@@ -173,12 +179,15 @@ func _apply_jump() -> void:
 		velocity.y = jump_velocity
 
 
-# Smoothly rotate the mesh child to face the movement direction.
-# Rotates the visual child only — CharacterBody3D capsule stays axis-aligned.
+## Smoothly rotate the mesh child to face the movement direction.
+## Rotates the visual child only — CharacterBody3D capsule stays axis-aligned.
 func _update_facing(delta: float) -> void:
+	# Guard: Basis.looking_at() is undefined for a zero-length direction vector.
 	if _facing_dir == Vector3.ZERO:
 		return
-	var mesh := get_node_or_null("robot_gobot")
+	# Prefer the exported reference; fall back to the hard-coded child name so
+	# existing scenes without the Inspector assignment still work.
+	var mesh: Node3D = robot_mesh if robot_mesh else get_node_or_null("robot_gobot") as Node3D
 	if not mesh:
 		return
 	var target_basis := Basis.looking_at(_facing_dir, Vector3.UP)
