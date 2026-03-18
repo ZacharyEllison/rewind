@@ -152,22 +152,27 @@ func _apply_horizontal_movement(delta: float) -> void:
 	var move_dir := Vector3.ZERO
 
 	if stick.length_squared() > 0.0:
-		if xr_camera:
+		# Only use XRCamera3D orientation when a physical controller is actually tracked.
+		# In desktop mode xr_camera is non-null but its basis may be garbage from the
+		# XR runtime, causing keyboard X-axis input to collapse to zero after y-flatten.
+		var any_controller_active := (left_controller and left_controller.get_is_active()) \
+								  or (right_controller and right_controller.get_is_active())
+		if xr_camera and any_controller_active:
 			var cam_basis := xr_camera.global_transform.basis
-			# stick.x = strafe right, stick.y = forward (positive y on stick = forward = -Z)
 			move_dir = cam_basis * Vector3(stick.x, 0.0, -stick.y)
 		else:
-			# Desktop fallback: no XR camera, so use a scene Camera3D if available,
-			# otherwise fall back to world-space axes (forward = -Z, right = +X).
+			# Desktop: use the active flat Camera3D, or fall back to world-space axes.
 			var cam3d := get_viewport().get_camera_3d()
 			if cam3d:
 				var cam_basis := cam3d.global_transform.basis
 				move_dir = cam_basis * Vector3(stick.x, 0.0, -stick.y)
 			else:
-				# Pure world-space: stick.x → right (+X), stick.y → forward (-Z)
 				move_dir = Vector3(stick.x, 0.0, -stick.y)
 		move_dir.y = 0.0
-		move_dir = move_dir.normalized()
+		if move_dir.length_squared() > 0.0001:
+			move_dir = move_dir.normalized()
+		else:
+			move_dir = Vector3.ZERO
 
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
 	var current_speed := horizontal.length()
