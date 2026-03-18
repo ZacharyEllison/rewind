@@ -1,5 +1,11 @@
 [gd_scene format=3 uid="uid://level01main"]
 
+[ext_resource type="Script" path="res://assets/scripts/_systems/GoalZone.gd" id="1_goalzone"]
+[ext_resource type="Script" path="res://assets/scripts/_systems/SandCrystal.gd" id="2_sandcrystal"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_goal"]
+size = Vector3(3.5, 0.5, 3.5)
+
 [sub_resource type="BoxShape3D" id="BoxShape3D_start"]
 size = Vector3(6, 0.4, 6)
 
@@ -103,3 +109,17 @@ shape = SubResource("BoxShape3D_p5")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="GoalPlatform"]
 mesh = SubResource("BoxMesh_p5")
 surface_material_override/0 = SubResource("Mat_ground")
+
+[node name="GoalZone" type="Area3D" parent="GoalPlatform"]
+script = ExtResource("1_goalzone")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GoalPlatform/GoalZone"]
+shape = SubResource("BoxShape3D_goal")
+
+[node name="SandCrystal_Platform2" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 2.8, -3)
+script = ExtResource("2_sandcrystal")
+
+[node name="SandCrystal_GoalPlatform" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 7.2, 0)
+script = ExtResource("2_sandcrystal")

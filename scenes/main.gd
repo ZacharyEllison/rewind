@@ -5,31 +5,95 @@
 
 extends Node3D
 
+## Pool of ghost nodes, one per available ghost slot. Index 0 is always $GhostRobot.
+var _ghost_pool: Array[Node] = []
+
+## Tracks how many ghosts are currently playing back; when this reaches 0,
+## rewind is considered complete.
+var _ghosts_playing: int = 0
+
 func _ready() -> void:
 	var game_manager := $GameManager
 	var robot := $RobotCharacter
-	var ghost := $GhostRobot
 
 	game_manager.set_robot(robot)
 
-	# When a rewind is triggered, start ghost playback
+	# Build the initial ghost pool (1 slot: the existing $GhostRobot).
+	_rebuild_ghost_pool()
+
+	# When a new crystal is collected, expand the pool by one ghost.
+	game_manager.sand_crystal_collected.connect(func(_count):
+		_rebuild_ghost_pool()
+	)
+
+	# When a rewind is triggered, start playback on every ghost that has a run.
 	game_manager.rewinding_started.connect(func(_position_count):
-		ghost.start_playback(game_manager.recorded_positions, game_manager.recorded_animations)
+		_ghosts_playing = 0
+		for i in range(game_manager.past_runs.size()):
+			if i >= _ghost_pool.size():
+				break
+			var run = game_manager.past_runs[i]
+			_ghost_pool[i].start_playback(run["positions"], run["animations"])
+			_ghosts_playing += 1
 	)
 
-	# When ghost finishes playing back, mark rewind complete in GameManager.
-	# complete_rewind() clears is_rewinding and emits rewind_completed internally,
-	# avoiding direct property mutation and bare emit_signal calls from outside the class.
-	ghost.playback_finished.connect(func():
-		game_manager.complete_rewind()
-	)
+	# When all ghosts finish, mark rewind complete in GameManager.
+	# complete_rewind() clears is_rewinding and emits rewind_completed internally.
+	# Individual ghost connections are set up inside _rebuild_ghost_pool().
 
-	# Clean up ghost if rewind is cancelled / new attempt starts
+	# Stop all ghosts when rewind is cancelled or a new attempt starts.
 	game_manager.rewind_completed.connect(func():
-		ghost.stop_playback()
+		for ghost in _ghost_pool:
+			ghost.stop_playback()
 	)
 
 	_setup_xr_or_fallback()
+
+
+## Rebuilds the ghost pool to match game_manager.max_ghost_slots.
+## Slot 0 is always the original $GhostRobot node; additional slots are
+## duplicates appended as children of this scene root.
+func _rebuild_ghost_pool() -> void:
+	var game_manager := $GameManager
+	var base_ghost := $GhostRobot
+
+	# Stop and disconnect any ghosts beyond the base node before clearing.
+	for i in range(1, _ghost_pool.size()):
+		var old_ghost: Node = _ghost_pool[i]
+		if old_ghost.has_signal("playback_finished"):
+			# Disconnect all connections from this ghost's playback_finished to _on_ghost_playback_finished.
+			if old_ghost.playback_finished.is_connected(_on_ghost_playback_finished):
+				old_ghost.playback_finished.disconnect(_on_ghost_playback_finished)
+		old_ghost.stop_playback()
+		old_ghost.queue_free()
+
+	_ghost_pool.clear()
+
+	# Disconnect base ghost's signal before re-connecting to avoid duplicates.
+	if base_ghost.playback_finished.is_connected(_on_ghost_playback_finished):
+		base_ghost.playback_finished.disconnect(_on_ghost_playback_finished)
+
+	# Slot 0: the original scene ghost.
+	base_ghost.playback_finished.connect(_on_ghost_playback_finished)
+	_ghost_pool.append(base_ghost)
+
+	# Slots 1..max_ghost_slots-1: duplicates added as siblings of the base ghost.
+	for _i in range(1, game_manager.max_ghost_slots):
+		var new_ghost: Node = base_ghost.duplicate()
+		add_child(new_ghost)
+		new_ghost.playback_finished.connect(_on_ghost_playback_finished)
+		_ghost_pool.append(new_ghost)
+
+	print("Ghost pool rebuilt - %d slot(s)" % _ghost_pool.size())
+
+
+## Called whenever any ghost finishes its playback.
+## When all active ghosts are done, signals GameManager that the rewind is complete.
+func _on_ghost_playback_finished() -> void:
+	_ghosts_playing -= 1
+	if _ghosts_playing <= 0:
+		_ghosts_playing = 0
+		$GameManager.complete_rewind()
 
 
 func _setup_xr_or_fallback() -> void:

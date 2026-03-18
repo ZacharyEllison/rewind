@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://level01main" path="res://scenes/level_01.tscn" id="6_lvl01"]
 [ext_resource type="Script" uid="uid://ckhvuv3fy3bjd" path="res://assets/scripts/_systems/GhostRobot.gd" id="7_ghost"]
 [ext_resource type="Script" uid="uid://rd1drmo882nv" path="res://assets/scripts/_systems/RobotAnimationController.gd" id="8_anim"]
+[ext_resource type="Script" uid="uid://hud001" path="res://assets/scripts/HUD.gd" id="9_hud001"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0wfyh"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -30,6 +31,7 @@ height = 0.9
 script = ExtResource("5_main01")
 
 [node name="GameManager" type="Node" parent="." unique_id=100000001]
+groups = ["game_manager"]
 script = ExtResource("3_gm001")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2066679643]
@@ -85,3 +87,6 @@ tracker = &"left_hand"
 show_when_tracked = true
 
 [node name="OpenXRRenderModel" type="OpenXRRenderModel" parent="XROrigin3D/LeftHandController" unique_id=600000011]
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=700000001]
+script = ExtResource("9_hud001")
