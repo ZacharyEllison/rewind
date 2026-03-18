@@ -218,5 +218,7 @@ func _update_facing(delta: float) -> void:
 	var mesh: Node3D = robot_mesh if robot_mesh else get_node_or_null("robot_gobot") as Node3D
 	if not mesh:
 		return
-	var target_basis := Basis.looking_at(_facing_dir, Vector3.UP)
+	# Negate: looking_at() aligns local -Z to the target, but the robot mesh's
+	# visual front is +Z, so we pass the opposite direction to make +Z face movement.
+	var target_basis := Basis.looking_at(-_facing_dir, Vector3.UP)
 	mesh.global_transform.basis = mesh.global_transform.basis.slerp(target_basis, turn_speed * delta)

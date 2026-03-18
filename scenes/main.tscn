@@ -64,12 +64,13 @@ script = ExtResource("7_ghost")
 [node name="StartXR" parent="." unique_id=1017752894 instance=ExtResource("2_0wfyh")]
 
 [node name="FallbackCamera" type="Camera3D" parent="." unique_id=600000001]
-transform = Transform3D(1, 0, 0, 0, 0.9396926, -0.34202015, 0, 0.34202015, 0.9396926, 0, 3, 8)
+transform = Transform3D(1, 0, 0, 0, 0.9817436, -0.19020933, 0, 0.19020933, 0.9817436, 0.7917185, 1.3840206, 9.949105)
 
 [node name="XROrigin3D" type="XROrigin3D" parent="." unique_id=835933874]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4872775, 2.1425269)
 
 [node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D" unique_id=413341949]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.909086)
 
 [node name="OpenXRRenderModelManager" type="OpenXRRenderModelManager" parent="XROrigin3D" unique_id=1760177678]
 
