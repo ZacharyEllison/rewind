@@ -9,6 +9,8 @@
 [ext_resource type="Script" uid="uid://ckhvuv3fy3bjd" path="res://assets/scripts/_systems/GhostRobot.gd" id="7_ghost"]
 [ext_resource type="Script" uid="uid://rd1drmo882nv" path="res://assets/scripts/_systems/RobotAnimationController.gd" id="8_anim"]
 [ext_resource type="Script" uid="uid://hud001" path="res://assets/scripts/HUD.gd" id="9_hud001"]
+[ext_resource type="Script" uid="uid://xrhud01" path="res://assets/scripts/XRHUD.gd" id="10_xrhud"]
+[ext_resource type="Script" uid="uid://grablocomot" path="res://assets/scripts/_systems/XRGrabLocomotion.gd" id="11_grablocomot"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0wfyh"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -74,7 +76,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4872775, 2.1425269)
 [node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D" unique_id=413341949]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.909086)
 
-[node name="OpenXRRenderModelManager" type="OpenXRRenderModelManager" parent="XROrigin3D" unique_id=1760177678]
+[node name="XRHUD" type="Node3D" parent="XROrigin3D/XRCamera3D" unique_id=900000001]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.18, -0.6)
+script = ExtResource("10_xrhud")
+
+[node name="XRGrabLocomotion" type="Node" parent="XROrigin3D" unique_id=800000001]
+script = ExtResource("11_grablocomot")
+left_controller = NodePath("../LeftHandController")
+right_controller = NodePath("../RightHandController")
 
 [node name="RightHandController" type="XRController3D" parent="XROrigin3D" unique_id=559462315]
 tracker = &"right_hand"
