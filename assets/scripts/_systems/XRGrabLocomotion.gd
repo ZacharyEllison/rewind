@@ -9,7 +9,7 @@ extends Node
 @export var left_controller: XRController3D
 @export var right_controller: XRController3D
 @export var xr_origin: XROrigin3D
-@export var drag_scale: float = 1.0
+@export var drag_scale: float = 2.0
 @export var rotation_speed_degrees: float = 120.0
 @export var input_deadzone: float = 0.2
 
@@ -17,6 +17,7 @@ var _left_dragging: bool = false
 var _right_dragging: bool = false
 var _left_anchor_local: Vector3 = Vector3.ZERO
 var _right_anchor_local: Vector3 = Vector3.ZERO
+var _robot: Node3D
 
 
 func _ready() -> void:
@@ -24,12 +25,15 @@ func _ready() -> void:
 		left_controller = XRHelpers.get_left_controller(self)
 	if not right_controller:
 		right_controller = XRHelpers.get_right_controller(self)
+	_robot = _find_robot()
 
 
 func _physics_process(delta: float) -> void:
 	var origin := xr_origin if xr_origin else get_parent() as XROrigin3D
 	if not origin:
 		return
+	if not _robot or not is_instance_valid(_robot):
+		_robot = _find_robot()
 
 	_rotate_origin(origin, delta)
 	_process_drag(origin, left_controller, true)
@@ -57,6 +61,9 @@ func _get_pressed_stick(controller: XRController3D) -> Vector2:
 
 
 func _rotate_origin(origin: XROrigin3D, delta: float) -> void:
+	if not _robot:
+		return
+
 	var stick := _get_locomotion_stick()
 	if stick == Vector2.ZERO:
 		return
@@ -65,7 +72,20 @@ func _rotate_origin(origin: XROrigin3D, delta: float) -> void:
 	if absf(yaw_input) < input_deadzone:
 		return
 
-	origin.rotate_y(-deg_to_rad(rotation_speed_degrees) * yaw_input * delta)
+	var yaw_radians := -deg_to_rad(rotation_speed_degrees) * yaw_input * delta
+	var robot_position := _robot.global_position
+	var offset := origin.global_position - robot_position
+	var horizontal_offset := Vector3(offset.x, 0.0, offset.z)
+	if horizontal_offset.length_squared() <= 0.000001:
+		return
+
+	horizontal_offset = horizontal_offset.rotated(Vector3.UP, yaw_radians)
+	origin.global_position = Vector3(
+		robot_position.x + horizontal_offset.x,
+		origin.global_position.y,
+		robot_position.z + horizontal_offset.z
+	)
+	origin.rotate_y(yaw_radians)
 
 
 func _process_drag(origin: XROrigin3D, controller: XRController3D, is_left: bool) -> void:
@@ -116,3 +136,13 @@ func _set_drag_state(is_left: bool, dragging: bool, anchor: Vector3) -> void:
 	else:
 		_right_dragging = dragging
 		_right_anchor_local = anchor
+
+
+func _find_robot() -> Node3D:
+	var root := get_parent().get_parent() if get_parent() else null
+	if root:
+		var robot := root.get_node_or_null("RobotCharacter") as Node3D
+		if robot:
+			return robot
+		return root.find_child("RobotCharacter", true, false) as Node3D
+	return null
