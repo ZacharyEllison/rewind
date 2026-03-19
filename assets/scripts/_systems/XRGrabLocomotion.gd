@@ -2,7 +2,7 @@
 ## Provides held-stick camera rotation plus world-drag locomotion for VR.
 ## Hold a thumbstick click (primary_click) and move the stick left/right to
 ## rotate the player view. While held, moving the controller in physical space
-## drags the XROrigin through the world.
+## drags the XROrigin through the world, including vertical movement.
 
 extends Node
 
@@ -109,7 +109,6 @@ func _process_drag(origin: XROrigin3D, controller: XRController3D, is_left: bool
 		return
 
 	var delta_world := origin.global_transform.basis * delta_local
-	delta_world.y = 0.0
 	origin.global_position -= delta_world * drag_scale
 	_set_anchor_local(is_left, current_local)
 
