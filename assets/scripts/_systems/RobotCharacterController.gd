@@ -38,6 +38,9 @@ var _gravity: Vector3
 var _facing_dir: Vector3 = Vector3.FORWARD
 var _rewind_was_pressed: bool = false
 var game_manager: Node
+var _log_frame: int = 0  # throttle verbose per-frame logs
+var _left_was_active: bool = false
+var _right_was_active: bool = false
 
 
 func _ready() -> void:
@@ -47,12 +50,25 @@ func _ready() -> void:
 	game_manager = get_parent().get_node_or_null("GameManager")
 	spawn_position = global_position
 	print("RobotController Ready - max_speed: %.1f, jump: %.1f" % [max_speed, jump_velocity])
+	print("[CTL] left_controller assigned: %s" % str(left_controller))
+	print("[CTL] right_controller assigned: %s" % str(right_controller))
+	print("[CTL] xr_camera assigned: %s" % str(xr_camera))
+	if left_controller:
+		left_controller.button_pressed.connect(func(btn): print("[CTL] LEFT button_pressed: %s" % btn))
+		left_controller.button_released.connect(func(btn): print("[CTL] LEFT button_released: %s" % btn))
+		left_controller.input_vector2_changed.connect(func(name, vec): print("[CTL] LEFT vector2 %s = %s" % [name, vec]))
+	if right_controller:
+		right_controller.button_pressed.connect(func(btn): print("[CTL] RIGHT button_pressed: %s" % btn))
+		right_controller.button_released.connect(func(btn): print("[CTL] RIGHT button_released: %s" % btn))
+		right_controller.input_vector2_changed.connect(func(name, vec): print("[CTL] RIGHT vector2 %s = %s" % [name, vec]))
 	# Auto-start recording immediately so the first run is captured
 	if game_manager:
 		game_manager.start_recording()
 
 
 func _physics_process(delta: float) -> void:
+	_log_frame += 1
+	_check_controller_active_state()
 	_check_fall()
 	_check_rewind_trigger()
 	# Block movement during rewind playback
@@ -65,6 +81,29 @@ func _physics_process(delta: float) -> void:
 	_apply_jump()
 	move_and_slide()
 	_update_facing(delta)
+
+
+# --- Controller active-state change detection ---
+
+func _check_controller_active_state() -> void:
+	var left_active := left_controller != null and left_controller.get_is_active()
+	var right_active := right_controller != null and right_controller.get_is_active()
+
+	if left_active != _left_was_active:
+		print("[CTL] LEFT controller active changed: %s -> %s  (frame %d)" % [
+			_left_was_active, left_active, _log_frame])
+		_left_was_active = left_active
+
+	if right_active != _right_was_active:
+		print("[CTL] RIGHT controller active changed: %s -> %s  (frame %d)" % [
+			_right_was_active, right_active, _log_frame])
+		_right_was_active = right_active
+
+	# Periodic heartbeat every ~3 seconds so you can see current state in the log
+	if _log_frame % 180 == 0:
+		print("[CTL] heartbeat — left_active=%s  right_active=%s  pos=%s  vel=%s" % [
+			left_active, right_active,
+			global_position.snappedf(0.01), velocity.snappedf(0.01)])
 
 
 # --- Rewind trigger ---
@@ -165,23 +204,36 @@ func _apply_horizontal_movement(delta: float) -> void:
 		# Only use XRCamera3D orientation when a physical controller is actually tracked.
 		# In desktop mode xr_camera is non-null but its basis may be garbage from the
 		# XR runtime, causing keyboard X-axis input to collapse to zero after y-flatten.
-		var any_controller_active := (left_controller and left_controller.get_is_active()) \
-								  or (right_controller and right_controller.get_is_active())
+		var left_active := left_controller != null and left_controller.get_is_active()
+		var right_active := right_controller != null and right_controller.get_is_active()
+		var any_controller_active := left_active or right_active
+		if _log_frame % 60 == 0:
+			print("[CTL] stick=%s  left_active=%s  right_active=%s  xr_camera=%s" % [
+				stick, left_active, right_active, str(xr_camera)])
 		if xr_camera and any_controller_active:
 			var cam_basis := xr_camera.global_transform.basis
 			move_dir = cam_basis * Vector3(stick.x, 0.0, -stick.y)
+			if _log_frame % 60 == 0:
+				print("[CTL] using XRCamera  cam_basis_valid=%s  move_dir_pre_flatten=%s" % [
+					cam_basis.is_finite(), move_dir])
 		else:
 			# Desktop: use the active flat Camera3D, or fall back to world-space axes.
 			var cam3d := get_viewport().get_camera_3d()
 			if cam3d:
 				var cam_basis := cam3d.global_transform.basis
 				move_dir = cam_basis * Vector3(stick.x, 0.0, -stick.y)
+				if _log_frame % 60 == 0:
+					print("[CTL] using FlatCam  move_dir_pre_flatten=%s" % move_dir)
 			else:
 				move_dir = Vector3(stick.x, 0.0, -stick.y)
+				if _log_frame % 60 == 0:
+					print("[CTL] no camera found, world-space move_dir=%s" % move_dir)
 		move_dir.y = 0.0
 		if move_dir.length_squared() > 0.0001:
 			move_dir = move_dir.normalized()
 		else:
+			if _log_frame % 60 == 0:
+				print("[CTL] WARNING: move_dir collapsed to zero after flatten (stick had input but no movement)")
 			move_dir = Vector3.ZERO
 
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
