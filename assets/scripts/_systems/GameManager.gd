@@ -12,6 +12,7 @@ signal recording_started(count: int, duration: float)
 signal recording_stopped
 signal rewinding_started(position_count: int)
 signal rewind_completed
+signal ghost_playback_requested
 signal attempt_completed
 signal sand_crystal_collected(count: int)
 signal ghost_slots_changed(slots_used: int, slots_max: int)
@@ -54,19 +55,23 @@ func _ready() -> void:
 
 func _initialize_game() -> void:
 	current_attempt_count = 0
+	current_attempt_duration = 0.0
+	is_recording = false
+	is_rewinding = false
+	is_game_paused = false
 	sand_crystal_count = 0
 	max_ghost_slots = 1
 	past_runs.clear()
+	recorded_positions.clear()
+	recorded_animations.clear()
 	max_rewind_seconds = MAX_ATTEMPT_TIME * max_ghost_slots
 
 ## Recording functions
 func start_recording() -> void:
 	is_recording = true
+	is_rewinding = false
 	current_attempt_count += 1
-	current_attempt_duration = 0.0
-	_record_accumulator = 0.0
-	recorded_positions.clear()
-	recorded_animations.clear()
+	_clear_current_recording()
 
 	emit_signal("recording_started", current_attempt_count, MAX_ATTEMPT_TIME)
 	print("Recording started - Attempt #%d, Max time: %0.fs" % [
@@ -107,47 +112,37 @@ func stop_recording() -> void:
 	emit_signal("recording_stopped")
 
 func trigger_rewind() -> void:
-	# Guard: block if already rewinding (prevents double-trigger) or nothing to play back.
-	if is_rewinding or recorded_positions.is_empty():
-		print("ERROR: Cannot rewind - already rewinding or no positions recorded")
+	if recorded_positions.is_empty():
+		print("ERROR: Cannot rewind - no positions recorded")
 		return
 
-	is_recording = false
-	is_rewinding = true
-
-	# Save the current run into past_runs before starting playback.
-	var run := {
-		"positions": recorded_positions.duplicate(),
-		"animations": recorded_animations.duplicate()
-	}
-	past_runs.push_back(run)
-	# Trim to max_ghost_slots, dropping the oldest run first.
-	while past_runs.size() > max_ghost_slots:
-		past_runs.pop_front()
-
-	emit_signal("rewinding_started", recorded_positions.size())
-	print("Rewind triggered - Playback %d positions, %d ghost(s) active" % [
-		recorded_positions.size(), past_runs.size()
-	])
+	stop_recording()
+	_store_current_run()
+	_begin_next_attempt_with_ghosts()
+	print("Rewind triggered - Playback %d retained run(s), next live attempt started" % past_runs.size())
 
 func start_new_attempt() -> void:
-	is_rewinding = false
 	is_recording = false
-	current_attempt_duration = 0.0
-	_record_accumulator = 0.0
-	recorded_positions.clear()
-	recorded_animations.clear()
+	is_rewinding = false
+	is_game_paused = false
+	_clear_current_recording()
 	past_runs.clear()
-	emit_signal("ghost_slots_changed", 0, max_ghost_slots)
 	_reset_robot_position()
 	emit_signal("new_attempt_started")
+	emit_signal("ghost_slots_changed", 0, max_ghost_slots)
+	emit_signal("ghost_playback_requested")
 	print("New attempt started")
 
 func retry_current_attempt() -> void:
 	is_recording = false
 	is_rewinding = false
 	is_game_paused = false
+	_clear_current_recording()
 	_reset_robot_position()
+	emit_signal("new_attempt_started")
+	emit_signal("ghost_slots_changed", past_runs.size(), max_ghost_slots)
+	emit_signal("ghost_playback_requested")
+	start_recording()
 	print("Current attempt retried")
 
 func _reset_robot_position() -> void:
@@ -178,8 +173,7 @@ func is_recording_active() -> bool:
 func is_rewinding_active() -> bool:
 	return is_rewinding
 
-## Called by main.gd (via ghost tracking) when all ghost playbacks finish.
-## Clears the rewinding flag and fires rewind_completed so listeners can react.
+## Compatibility shim for older UI/scripts that still listen for rewind_completed.
 func complete_rewind() -> void:
 	is_rewinding = false
 	emit_signal("rewind_completed")
@@ -242,3 +236,31 @@ func _find_node_with_method(node: Node, method_name: String) -> Node:
 		if found:
 			return found
 	return null
+
+
+func _clear_current_recording() -> void:
+	current_attempt_duration = 0.0
+	_record_accumulator = 0.0
+	recorded_positions.clear()
+	recorded_animations.clear()
+
+
+func _store_current_run() -> void:
+	var run := {
+		"positions": recorded_positions.duplicate(),
+		"animations": recorded_animations.duplicate()
+	}
+	past_runs.push_back(run)
+	while past_runs.size() > max_ghost_slots:
+		past_runs.pop_front()
+
+
+func _begin_next_attempt_with_ghosts() -> void:
+	is_rewinding = false
+	is_game_paused = false
+	_clear_current_recording()
+	_reset_robot_position()
+	emit_signal("new_attempt_started")
+	emit_signal("ghost_slots_changed", past_runs.size(), max_ghost_slots)
+	emit_signal("ghost_playback_requested")
+	start_recording()

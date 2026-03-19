@@ -8,9 +8,9 @@ extends Node3D
 ## Pool of ghost nodes, one per available ghost slot. Index 0 is always $GhostRobot.
 var _ghost_pool: Array[Node] = []
 
-## Tracks how many ghosts are currently playing back; when this reaches 0,
-## rewind is considered complete.
-var _ghosts_playing: int = 0
+## Clean duplicate source captured before any playback starts, so new slots do
+## not inherit live playback state from an active ghost.
+var _ghost_template: Node = null
 
 ## Currently loaded level scene instance.
 var _current_level_scene: Node = null
@@ -18,89 +18,61 @@ var _current_level_scene: Node = null
 func _ready() -> void:
 	var game_manager := $GameManager
 	var robot := $RobotCharacter
+	var base_ghost := $GhostRobot
 
 	game_manager.set_robot(robot)
+	_ghost_pool = [base_ghost]
+	_ghost_template = base_ghost.duplicate()
 
 	# Load the starting level.
 	_load_level(game_manager.current_level)
 	game_manager.level_changed.connect(_on_level_changed)
 
-	# Build the initial ghost pool (1 slot: the existing $GhostRobot).
-	_rebuild_ghost_pool()
-
-	# When a new crystal is collected, expand the pool by one ghost.
-	game_manager.sand_crystal_collected.connect(func(_count):
-		_rebuild_ghost_pool()
-	)
-
-	# When a rewind is triggered, start playback on every ghost that has a run.
-	game_manager.rewinding_started.connect(func(_position_count):
-		_ghosts_playing = 0
-		for i in range(game_manager.past_runs.size()):
-			if i >= _ghost_pool.size():
-				break
-			var run = game_manager.past_runs[i]
-			_ghost_pool[i].start_playback(run["positions"], run["animations"])
-			_ghosts_playing += 1
-	)
-
-	# When all ghosts finish, mark rewind complete in GameManager.
-	# complete_rewind() clears is_rewinding and emits rewind_completed internally.
-	# Individual ghost connections are set up inside _rebuild_ghost_pool().
-
-	# Stop all ghosts when rewind is cancelled or a new attempt starts.
-	game_manager.rewind_completed.connect(func():
-		for ghost in _ghost_pool:
-			ghost.stop_playback()
-	)
+	_ensure_ghost_pool_size(game_manager.max_ghost_slots)
+	game_manager.ghost_slots_changed.connect(_on_ghost_slots_changed)
+	game_manager.ghost_playback_requested.connect(_on_ghost_playback_requested)
 
 	_setup_xr_or_fallback()
 
 
-## Rebuilds the ghost pool to match game_manager.max_ghost_slots.
-## Slot 0 is always the original $GhostRobot node; additional slots are
-## duplicates appended as children of this scene root.
-func _rebuild_ghost_pool() -> void:
-	var game_manager := $GameManager
-	var base_ghost := $GhostRobot
-
-	# Stop and disconnect any ghosts beyond the base node before clearing.
-	for i in range(1, _ghost_pool.size()):
-		var old_ghost: Node = _ghost_pool[i]
-		if old_ghost.has_signal("playback_finished"):
-			# Disconnect all connections from this ghost's playback_finished to _on_ghost_playback_finished.
-			if old_ghost.playback_finished.is_connected(_on_ghost_playback_finished):
-				old_ghost.playback_finished.disconnect(_on_ghost_playback_finished)
+## Grows or shrinks the reusable ghost pool to match the currently unlocked
+## slot count without restarting any ghosts already in motion.
+func _ensure_ghost_pool_size(desired_size: int) -> void:
+	var target_size := maxi(desired_size, 1)
+	var previous_size := _ghost_pool.size()
+	while _ghost_pool.size() < target_size:
+		var new_ghost: Node = _ghost_template.duplicate()
+		add_child(new_ghost)
+		_ghost_pool.append(new_ghost)
+	while _ghost_pool.size() > target_size and _ghost_pool.size() > 1:
+		var old_ghost := _ghost_pool.pop_back()
 		old_ghost.stop_playback()
 		old_ghost.queue_free()
-
-	_ghost_pool.clear()
-
-	# Disconnect base ghost's signal before re-connecting to avoid duplicates.
-	if base_ghost.playback_finished.is_connected(_on_ghost_playback_finished):
-		base_ghost.playback_finished.disconnect(_on_ghost_playback_finished)
-
-	# Slot 0: the original scene ghost.
-	base_ghost.playback_finished.connect(_on_ghost_playback_finished)
-	_ghost_pool.append(base_ghost)
-
-	# Slots 1..max_ghost_slots-1: duplicates added as siblings of the base ghost.
-	for _i in range(1, game_manager.max_ghost_slots):
-		var new_ghost: Node = base_ghost.duplicate()
-		add_child(new_ghost)
-		new_ghost.playback_finished.connect(_on_ghost_playback_finished)
-		_ghost_pool.append(new_ghost)
-
-	print("Ghost pool rebuilt - %d slot(s)" % _ghost_pool.size())
+	if _ghost_pool.size() != previous_size:
+		print("Ghost pool ready - %d slot(s)" % _ghost_pool.size())
 
 
-## Called whenever any ghost finishes its playback.
-## When all active ghosts are done, signals GameManager that the rewind is complete.
-func _on_ghost_playback_finished() -> void:
-	_ghosts_playing -= 1
-	if _ghosts_playing <= 0:
-		_ghosts_playing = 0
-		$GameManager.complete_rewind()
+func _stop_all_ghosts() -> void:
+	for ghost in _ghost_pool:
+		ghost.stop_playback()
+
+
+func _on_ghost_slots_changed(_used: int, max_slots: int) -> void:
+	_ensure_ghost_pool_size(max_slots)
+
+
+func _on_ghost_playback_requested() -> void:
+	var game_manager := $GameManager
+	_ensure_ghost_pool_size(game_manager.max_ghost_slots)
+	_stop_all_ghosts()
+
+	for i in range(mini(game_manager.past_runs.size(), _ghost_pool.size())):
+		var run: Dictionary = game_manager.past_runs[i]
+		var positions: Array[Vector3] = []
+		var animations: Array[String] = []
+		positions.assign(run.get("positions", []))
+		animations.assign(run.get("animations", []))
+		_ghost_pool[i].start_playback(positions, animations)
 
 
 func _setup_xr_or_fallback() -> void:
@@ -166,6 +138,7 @@ func _load_level(level_id: int) -> void:
 
 ## Called when GameManager emits level_changed; transitions to the new level.
 func _on_level_changed(level_id: int) -> void:
+	_stop_all_ghosts()
 	_load_level(level_id)
 	var game_manager := $GameManager
 	game_manager.start_new_attempt()

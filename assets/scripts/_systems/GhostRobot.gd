@@ -21,6 +21,7 @@ var _anim_player: AnimationPlayer
 var _current_anim: String = ""
 var _last_position: Vector3 = Vector3.ZERO
 var _visual_root: Node3D
+var _interaction_area: Area3D
 
 
 func _ready() -> void:
@@ -29,6 +30,7 @@ func _ready() -> void:
 	_visual_root = get_node_or_null("robot_gobot") as Node3D
 	GhostAppearance.apply(self)
 	_setup_interaction_area()
+	_set_interaction_enabled(false)
 
 
 func start_playback(positions: Array[Vector3], animations: Array[String] = []) -> void:
@@ -41,6 +43,7 @@ func start_playback(positions: Array[Vector3], animations: Array[String] = []) -
 	_active = true
 	_current_anim = ""
 	visible = true
+	_set_interaction_enabled(true)
 	global_position = _positions[0]
 	_last_position = _positions[0]
 	if not _animations.is_empty():
@@ -50,8 +53,11 @@ func start_playback(positions: Array[Vector3], animations: Array[String] = []) -
 func stop_playback() -> void:
 	_active = false
 	visible = false
+	_elapsed = 0.0
+	_current_anim = ""
 	_positions.clear()
 	_animations.clear()
+	_set_interaction_enabled(false)
 
 
 func _physics_process(delta: float) -> void:
@@ -64,8 +70,7 @@ func _physics_process(delta: float) -> void:
 	var target_index := int(_elapsed / SAMPLE_INTERVAL)
 
 	if target_index >= _positions.size():
-		stop_playback()
-		emit_signal("playback_finished")
+		_freeze_at_last_sample()
 		return
 
 	# Interpolate smoothly between the current and next sample
@@ -87,6 +92,18 @@ func _physics_process(delta: float) -> void:
 	# Play the recorded animation for this frame index
 	if not _animations.is_empty() and target_index < _animations.size():
 		_play_anim(_animations[target_index])
+
+
+func _freeze_at_last_sample() -> void:
+	if _positions.is_empty():
+		stop_playback()
+		return
+	_active = false
+	_elapsed = float(_positions.size() - 1) * SAMPLE_INTERVAL
+	global_position = _positions[_positions.size() - 1]
+	_last_position = global_position
+	if not _animations.is_empty():
+		_play_anim(_animations[min(_positions.size() - 1, _animations.size() - 1)])
 
 
 func _play_anim(anim_name: String) -> void:
@@ -131,7 +148,14 @@ func _find_animation_player(node: Node) -> AnimationPlayer:
 ## Creates an Area3D child that moves with the ghost and can trigger pressure buttons.
 ## The area is in the "ghost_body" group so PressureButton can identify it.
 func _setup_interaction_area() -> void:
+	_interaction_area = get_node_or_null("GhostInteractionArea") as Area3D
+	if _interaction_area:
+		if not _interaction_area.is_in_group("ghost_body"):
+			_interaction_area.add_to_group("ghost_body")
+		return
+
 	var area := Area3D.new()
+	area.name = "GhostInteractionArea"
 	area.add_to_group("ghost_body")
 	var shape := CapsuleShape3D.new()
 	shape.radius = 0.25
@@ -141,3 +165,11 @@ func _setup_interaction_area() -> void:
 	col.position = Vector3(0, 0.45, 0)
 	area.add_child(col)
 	add_child(area)
+	_interaction_area = area
+
+
+func _set_interaction_enabled(enabled: bool) -> void:
+	if not _interaction_area:
+		return
+	_interaction_area.monitoring = enabled
+	_interaction_area.monitorable = enabled

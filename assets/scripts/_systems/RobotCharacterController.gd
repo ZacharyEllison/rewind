@@ -51,9 +51,6 @@ func _physics_process(delta: float) -> void:
 		_resolve_xr_input()
 	_check_fall()
 	_check_rewind_trigger()
-	if game_manager and game_manager.is_rewinding_active():
-		move_and_slide()
-		return
 	if not is_on_floor():
 		velocity += _gravity * delta
 	_apply_horizontal_movement(delta)
@@ -73,10 +70,7 @@ func _check_rewind_trigger() -> void:
 
 	if pressed and not _rewind_was_pressed:
 		if game_manager:
-			if game_manager.is_rewinding_active():
-				game_manager.complete_rewind()
-			elif game_manager.is_recording_active():
-				game_manager.stop_recording()
+			if game_manager.is_recording_active():
 				game_manager.trigger_rewind()
 			else:
 				game_manager.start_new_attempt()
@@ -96,10 +90,9 @@ func respawn() -> void:
 	global_position = spawn_position
 	if not game_manager:
 		return
-	if game_manager.is_recording_active():
-		game_manager.stop_recording()
-		game_manager.trigger_rewind()
-	elif not game_manager.is_rewinding_active():
+	if game_manager.has_method("retry_current_attempt"):
+		game_manager.retry_current_attempt()
+	elif not game_manager.is_recording_active():
 		game_manager.start_recording()
 
 

@@ -21,9 +21,8 @@ func _on_action_pressed(_what) -> void:
 	if not _game_manager:
 		return
 	if _game_manager.is_recording_active():
-		_game_manager.stop_recording()
 		_game_manager.trigger_rewind()
-	elif not _game_manager.is_rewinding_active():
+	else:
 		_game_manager.start_new_attempt()
 		_game_manager.start_recording()
 
