@@ -15,6 +15,7 @@ signal rewind_completed
 signal attempt_completed
 signal sand_crystal_collected(count: int)
 signal ghost_slots_changed(slots_used: int, slots_max: int)
+signal level_changed(level_id: int)
 
 ## Game state
 const MAX_ATTEMPT_TIME: float = 30.0
@@ -25,7 +26,7 @@ var current_attempt_duration: float = 0.0
 var is_recording: bool = false
 var is_rewinding: bool = false
 var is_game_paused: bool = false
-var current_level: int = 1
+var current_level: int = 0
 
 ## Sand / ghost system
 var sand_crystal_count: int = 0
@@ -160,6 +161,7 @@ func set_robot(node: Node) -> void:
 func _update_level(level: int) -> void:
 	current_level = level
 	max_rewind_seconds = MAX_ATTEMPT_TIME * max_ghost_slots
+	emit_signal("level_changed", current_level)
 
 func get_robot_node() -> Node:
 	return robot_node
@@ -193,6 +195,8 @@ func goal_reached() -> void:
 	if is_recording:
 		stop_recording()
 	emit_signal("attempt_completed")
+	current_level += 1
+	emit_signal("level_changed", current_level)
 
 ## Derives the animation state name from velocity and floor contact,
 ## using the same thresholds as RobotAnimationController.

@@ -5,7 +5,6 @@
 [ext_resource type="Script" uid="uid://b0v4tdsbspp7v" path="res://assets/scripts/_systems/GameManager.gd" id="3_gm001"]
 [ext_resource type="Script" uid="uid://b3b33nyudaioo" path="res://assets/scripts/_systems/RobotCharacterController.gd" id="4_rc001"]
 [ext_resource type="Script" uid="uid://11mb7syk1qla" path="res://scenes/main.gd" id="5_main01"]
-[ext_resource type="PackedScene" uid="uid://level01main" path="res://scenes/level_01.tscn" id="6_lvl01"]
 [ext_resource type="Script" uid="uid://ckhvuv3fy3bjd" path="res://assets/scripts/_systems/GhostRobot.gd" id="7_ghost"]
 [ext_resource type="Script" uid="uid://rd1drmo882nv" path="res://assets/scripts/_systems/RobotAnimationController.gd" id="8_anim"]
 [ext_resource type="Script" path="res://assets/scripts/HUD.gd" id="9_hud001"]
@@ -44,7 +43,7 @@ environment = SubResource("Environment_jyhfs")
 transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 2.5657995, 0)
 shadow_enabled = true
 
-[node name="Level01" parent="." unique_id=400000001 instance=ExtResource("6_lvl01")]
+[node name="LevelContainer" type="Node3D" parent="." unique_id=400000001]
 
 [node name="RobotCharacter" type="CharacterBody3D" parent="." unique_id=300000001]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)

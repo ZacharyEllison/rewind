@@ -1,0 +1,74 @@
+[gd_scene format=3 uid="uid://level00main"]
+
+[ext_resource type="Script" path="res://assets/scripts/_systems/GoalZone.gd" id="1_goalzone"]
+[ext_resource type="Script" path="res://assets/scripts/_systems/SandCrystal.gd" id="2_sandcrystal"]
+[ext_resource type="Script" path="res://assets/scripts/_systems/LiftPlatform.gd" id="3_lift"]
+[ext_resource type="Script" path="res://assets/scripts/_systems/PressureButton.gd" id="4_button"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_start"]
+size = Vector3(12, 0.4, 12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_start"]
+size = Vector3(12, 0.4, 12)
+
+[sub_resource type="StandardMaterial3D" id="Mat_start"]
+albedo_color = Color(0.3, 0.6, 0.3, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_high"]
+size = Vector3(5, 0.4, 5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_high"]
+size = Vector3(5, 0.4, 5)
+
+[sub_resource type="StandardMaterial3D" id="Mat_high"]
+albedo_color = Color(0.8, 0.7, 0.3, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_goal"]
+size = Vector3(4.5, 0.5, 4.5)
+
+[node name="Level00" type="Node3D"]
+
+[node name="SpawnPoint" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 4)
+
+[node name="StartPlatform" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StartPlatform"]
+shape = SubResource("BoxShape3D_start")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StartPlatform"]
+mesh = SubResource("BoxMesh_start")
+surface_material_override/0 = SubResource("Mat_start")
+
+[node name="HighPlatform" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HighPlatform"]
+shape = SubResource("BoxShape3D_high")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="HighPlatform"]
+mesh = SubResource("BoxMesh_high")
+surface_material_override/0 = SubResource("Mat_high")
+
+[node name="GoalZone" type="Area3D" parent="HighPlatform"]
+script = ExtResource("1_goalzone")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HighPlatform/GoalZone"]
+shape = SubResource("BoxShape3D_goal")
+
+[node name="SandCrystal" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.55, 0)
+script = ExtResource("2_sandcrystal")
+
+[node name="LiftPlatform" type="AnimatableBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+script = ExtResource("3_lift")
+lift_height = 7.8
+lift_duration = 3.0
+
+[node name="PressureButton" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 2)
+script = ExtResource("4_button")
+latching = true
+
+[connection signal="activated" from="PressureButton" to="LiftPlatform" method="activate"]

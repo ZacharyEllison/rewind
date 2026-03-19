@@ -12,11 +12,18 @@ var _ghost_pool: Array[Node] = []
 ## rewind is considered complete.
 var _ghosts_playing: int = 0
 
+## Currently loaded level scene instance.
+var _current_level_scene: Node = null
+
 func _ready() -> void:
 	var game_manager := $GameManager
 	var robot := $RobotCharacter
 
 	game_manager.set_robot(robot)
+
+	# Load the starting level.
+	_load_level(game_manager.current_level)
+	game_manager.level_changed.connect(_on_level_changed)
 
 	# Build the initial ghost pool (1 slot: the existing $GhostRobot).
 	_rebuild_ghost_pool()
@@ -122,3 +129,44 @@ func _activate_flat_camera() -> void:
 		print("Main: XR unavailable — FallbackCamera activated for desktop play.")
 	else:
 		push_warning("Main: FallbackCamera node not found; scene will have no active camera.")
+
+
+## Unload the current level and load the scene for the given level_id.
+func _load_level(level_id: int) -> void:
+	var level_container := $LevelContainer
+	# Free the previous level.
+	if _current_level_scene:
+		_current_level_scene.queue_free()
+		_current_level_scene = null
+
+	var level_paths: Dictionary = {
+		0: "res://scenes/level_00.tscn",
+		1: "res://scenes/level_01.tscn",
+	}
+	if not level_id in level_paths:
+		push_warning("Main: no level scene registered for level_id %d" % level_id)
+		return
+
+	var packed: PackedScene = load(level_paths[level_id])
+	if not packed:
+		push_error("Main: failed to load level scene: %s" % level_paths[level_id])
+		return
+
+	_current_level_scene = packed.instantiate()
+	level_container.add_child(_current_level_scene)
+
+	# Set the robot's spawn position from the level's SpawnPoint node (if present).
+	var spawn_node := _current_level_scene.get_node_or_null("SpawnPoint") as Node3D
+	var robot := $RobotCharacter
+	var spawn_pos: Vector3 = spawn_node.global_position if spawn_node else Vector3(0, 0.5, 0)
+	robot.global_position = spawn_pos
+	robot.set("spawn_position", spawn_pos)
+	print("Main: loaded level %d, robot spawn at %s" % [level_id, str(spawn_pos)])
+
+
+## Called when GameManager emits level_changed; transitions to the new level.
+func _on_level_changed(level_id: int) -> void:
+	_load_level(level_id)
+	var game_manager := $GameManager
+	game_manager.start_new_attempt()
+	game_manager.start_recording()
