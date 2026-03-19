@@ -1,17 +1,22 @@
 ## XRGrabLocomotion.gd
-## Provides camera-drag locomotion for VR. When the player holds the thumbstick
-## click (primary_click) on either controller and deflects the stick, the
-## XROrigin moves opposite the stick direction relative to the headset view.
+## Provides held-stick camera rotation plus world-drag locomotion for VR.
+## Hold a thumbstick click (primary_click) and move the stick left/right to
+## rotate the player view. While held, moving the controller in physical space
+## drags the XROrigin through the world.
 
 extends Node
 
 @export var left_controller: XRController3D
 @export var right_controller: XRController3D
 @export var xr_origin: XROrigin3D
-@export var movement_speed: float = 2.5
+@export var drag_scale: float = 1.0
+@export var rotation_speed_degrees: float = 120.0
 @export var input_deadzone: float = 0.2
 
-var _xr_camera: XRCamera3D
+var _left_dragging: bool = false
+var _right_dragging: bool = false
+var _left_anchor_local: Vector3 = Vector3.ZERO
+var _right_anchor_local: Vector3 = Vector3.ZERO
 
 
 func _ready() -> void:
@@ -19,7 +24,6 @@ func _ready() -> void:
 		left_controller = XRHelpers.get_left_controller(self)
 	if not right_controller:
 		right_controller = XRHelpers.get_right_controller(self)
-	_xr_camera = XRHelpers.get_xr_camera(self)
 
 
 func _physics_process(delta: float) -> void:
@@ -27,15 +31,9 @@ func _physics_process(delta: float) -> void:
 	if not origin:
 		return
 
-	var stick := _get_locomotion_stick()
-	if stick == Vector2.ZERO:
-		return
-
-	var move_dir := _get_drag_direction(stick)
-	if move_dir == Vector3.ZERO:
-		return
-
-	origin.global_position += move_dir * movement_speed * delta
+	_rotate_origin(origin, delta)
+	_process_drag(origin, left_controller, true)
+	_process_drag(origin, right_controller, false)
 
 
 func _get_locomotion_stick() -> Vector2:
@@ -58,26 +56,63 @@ func _get_pressed_stick(controller: XRController3D) -> Vector2:
 	return stick
 
 
-func _get_drag_direction(stick: Vector2) -> Vector3:
-	var basis_source: Node3D = _xr_camera if _xr_camera else xr_origin
-	if not basis_source:
-		return Vector3(-stick.x, 0.0, stick.y).normalized() * minf(stick.length(), 1.0)
+func _rotate_origin(origin: XROrigin3D, delta: float) -> void:
+	var stick := _get_locomotion_stick()
+	if stick == Vector2.ZERO:
+		return
 
-	var forward := -basis_source.global_transform.basis.z
-	forward.y = 0.0
-	if forward.length_squared() > 0.0001:
-		forward = forward.normalized()
+	var yaw_input := stick.x
+	if absf(yaw_input) < input_deadzone:
+		return
+
+	origin.rotate_y(-deg_to_rad(rotation_speed_degrees) * yaw_input * delta)
+
+
+func _process_drag(origin: XROrigin3D, controller: XRController3D, is_left: bool) -> void:
+	if not controller or not controller.get_is_active():
+		_set_drag_state(is_left, false, Vector3.ZERO)
+		return
+
+	var pressed := controller.is_button_pressed("primary_click")
+	if pressed and not _is_dragging(is_left):
+		_set_drag_state(is_left, true, controller.transform.origin)
+	elif not pressed:
+		_set_drag_state(is_left, false, Vector3.ZERO)
+		return
+
+	if not _is_dragging(is_left):
+		return
+
+	var current_local := controller.transform.origin
+	var delta_local := current_local - _get_anchor_local(is_left)
+	if delta_local.length_squared() <= 0.000001:
+		return
+
+	var delta_world := origin.global_transform.basis * delta_local
+	delta_world.y = 0.0
+	origin.global_position -= delta_world * drag_scale
+	_set_anchor_local(is_left, current_local)
+
+
+func _is_dragging(is_left: bool) -> bool:
+	return _left_dragging if is_left else _right_dragging
+
+
+func _get_anchor_local(is_left: bool) -> Vector3:
+	return _left_anchor_local if is_left else _right_anchor_local
+
+
+func _set_anchor_local(is_left: bool, anchor: Vector3) -> void:
+	if is_left:
+		_left_anchor_local = anchor
 	else:
-		forward = Vector3.FORWARD
+		_right_anchor_local = anchor
 
-	var right := basis_source.global_transform.basis.x
-	right.y = 0.0
-	if right.length_squared() > 0.0001:
-		right = right.normalized()
+
+func _set_drag_state(is_left: bool, dragging: bool, anchor: Vector3) -> void:
+	if is_left:
+		_left_dragging = dragging
+		_left_anchor_local = anchor
 	else:
-		right = Vector3.RIGHT
-
-	var move := (right * stick.x) + (forward * stick.y)
-	if move.length_squared() <= 0.0001:
-		return Vector3.ZERO
-	return -move.normalized() * minf(stick.length(), 1.0)
+		_right_dragging = dragging
+		_right_anchor_local = anchor
