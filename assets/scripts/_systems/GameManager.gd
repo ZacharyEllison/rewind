@@ -16,6 +16,7 @@ signal attempt_completed
 signal sand_crystal_collected(count: int)
 signal ghost_slots_changed(slots_used: int, slots_max: int)
 signal level_changed(level_id: int)
+signal new_attempt_started
 
 ## Game state
 const MAX_ATTEMPT_TIME: float = 30.0
@@ -44,8 +45,10 @@ var recorded_animations: Array[String] = []
 ## Elapsed time since the last position sample was recorded.
 ## Used instead of floating-point modulo to reliably fire at RECORD_INTERVAL.
 var _record_accumulator: float = 0.0
+var _robot_animation_controller: Node = null
 
 func _ready() -> void:
+	add_to_group("game_manager")
 	_initialize_game()
 	print("GameManager Ready - Max Attempt Time: %0.0f seconds" % MAX_ATTEMPT_TIME)
 
@@ -72,6 +75,8 @@ func start_recording() -> void:
 
 func _process(delta: float) -> void:
 	if is_recording and robot_node:
+		if not _robot_animation_controller or not is_instance_valid(_robot_animation_controller):
+			_robot_animation_controller = _find_robot_animation_controller()
 		current_attempt_duration += delta
 
 		# Record robot position at fixed intervals using an accumulator.
@@ -86,7 +91,7 @@ func _process(delta: float) -> void:
 				var body := robot_node as CharacterBody3D
 				var on_floor := body.is_on_floor() if body else true
 				var velocity := body.velocity if body else Vector3.ZERO
-				recorded_animations.append(_derive_animation_state(velocity, on_floor))
+				recorded_animations.append(_get_recorded_animation_state(velocity, on_floor))
 
 		# Auto-stop at max time
 		if current_attempt_duration >= MAX_ATTEMPT_TIME:
@@ -135,7 +140,7 @@ func start_new_attempt() -> void:
 	past_runs.clear()
 	emit_signal("ghost_slots_changed", 0, max_ghost_slots)
 	_reset_robot_position()
-
+	emit_signal("new_attempt_started")
 	print("New attempt started")
 
 func retry_current_attempt() -> void:
@@ -156,6 +161,7 @@ func _reset_robot_position() -> void:
 
 func set_robot(node: Node) -> void:
 	robot_node = node
+	_robot_animation_controller = _find_robot_animation_controller()
 	print("Robot set - ", str(robot_node))
 
 func _update_level(level: int) -> void:
@@ -212,3 +218,27 @@ func _derive_animation_state(velocity: Vector3, on_floor: bool) -> String:
 		return "walk"
 	else:
 		return "idle"
+
+
+func _get_recorded_animation_state(velocity: Vector3, on_floor: bool) -> String:
+	if _robot_animation_controller and _robot_animation_controller.has_method("get_current_animation_state"):
+		var state := _robot_animation_controller.call("get_current_animation_state") as String
+		if not state.is_empty():
+			return state
+	return _derive_animation_state(velocity, on_floor)
+
+
+func _find_robot_animation_controller() -> Node:
+	if not robot_node:
+		return null
+	return _find_node_with_method(robot_node, "get_current_animation_state")
+
+
+func _find_node_with_method(node: Node, method_name: String) -> Node:
+	if node.has_method(method_name):
+		return node
+	for child in node.get_children():
+		var found := _find_node_with_method(child, method_name)
+		if found:
+			return found
+	return null

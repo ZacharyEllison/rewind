@@ -64,6 +64,10 @@ func _play(anim_name: String) -> void:
 	# If nothing matched, stay on current animation
 
 
+func get_current_animation_state() -> String:
+	return _current_anim
+
+
 func _fallbacks(anim_name: String) -> Array[String]:
 	# Map desired state to likely animation name variants in the GLB
 	var map: Dictionary = {

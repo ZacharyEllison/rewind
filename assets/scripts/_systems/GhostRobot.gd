@@ -7,6 +7,7 @@ extends Node3D
 signal playback_finished
 
 @export var playback_speed: float = 1.0
+@export var turn_speed: float = 10.0
 
 var _positions: Array[Vector3] = []
 var _animations: Array[String] = []
@@ -19,12 +20,15 @@ var _elapsed: float = 0.0
 var _anim_player: AnimationPlayer
 var _current_anim: String = ""
 var _last_position: Vector3 = Vector3.ZERO
+var _visual_root: Node3D
 
 
 func _ready() -> void:
 	visible = false
 	_anim_player = _find_animation_player(self)
+	_visual_root = get_node_or_null("robot_gobot") as Node3D
 	GhostAppearance.apply(self)
+	_setup_interaction_area()
 
 
 func start_playback(positions: Array[Vector3], animations: Array[String] = []) -> void:
@@ -39,6 +43,8 @@ func start_playback(positions: Array[Vector3], animations: Array[String] = []) -
 	visible = true
 	global_position = _positions[0]
 	_last_position = _positions[0]
+	if not _animations.is_empty():
+		_play_anim(_animations[0])
 
 
 func stop_playback() -> void:
@@ -71,9 +77,9 @@ func _physics_process(delta: float) -> void:
 	# Rotate ghost to face direction of movement
 	var movement := new_position - _last_position
 	var horizontal_movement := Vector3(movement.x, 0.0, movement.z)
-	if horizontal_movement.length_squared() > 0.0001:
-		var target_basis := Basis.looking_at(horizontal_movement.normalized(), Vector3.UP)
-		global_basis = global_basis.orthonormalized().slerp(target_basis, 1)
+	if _visual_root and horizontal_movement.length_squared() > 0.0001:
+		var target_basis := Basis.looking_at(-horizontal_movement.normalized(), Vector3.UP)
+		_visual_root.global_transform.basis = _visual_root.global_transform.basis.slerp(target_basis, turn_speed * delta)
 
 	global_position = new_position
 	_last_position = new_position
@@ -120,3 +126,18 @@ func _find_animation_player(node: Node) -> AnimationPlayer:
 		if found:
 			return found
 	return null
+
+
+## Creates an Area3D child that moves with the ghost and can trigger pressure buttons.
+## The area is in the "ghost_body" group so PressureButton can identify it.
+func _setup_interaction_area() -> void:
+	var area := Area3D.new()
+	area.add_to_group("ghost_body")
+	var shape := CapsuleShape3D.new()
+	shape.radius = 0.25
+	shape.height = 0.9
+	var col := CollisionShape3D.new()
+	col.shape = shape
+	col.position = Vector3(0, 0.45, 0)
+	area.add_child(col)
+	add_child(area)

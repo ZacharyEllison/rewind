@@ -69,6 +69,7 @@ lift_duration = 3.0
 [node name="PressureButton" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 2)
 script = ExtResource("4_button")
-latching = true
+latching = false
 
 [connection signal="activated" from="PressureButton" to="LiftPlatform" method="activate"]
+[connection signal="deactivated" from="PressureButton" to="LiftPlatform" method="deactivate"]
