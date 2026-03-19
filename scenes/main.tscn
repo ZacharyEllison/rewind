@@ -13,8 +13,6 @@
 [ext_resource type="Script" path="res://assets/scripts/_systems/XRGrabLocomotion.gd" id="11_grablocomot"]
 [ext_resource type="Script" uid="uid://buvpojeeu8m43" path="res://assets/scripts/_systems/XRRobotInput.gd" id="12_xrinput"]
 [ext_resource type="Script" path="res://assets/scripts/_systems/XRControllerVisualFallback.gd" id="13_xrcontrollerfallback"]
-[ext_resource type="PackedScene" uid="uid://b4kad2kuba1yn" path="res://addons/godot-xr-tools/hands/scenes/lowpoly/left_hand_low.tscn" id="14_lefthandlow"]
-[ext_resource type="PackedScene" uid="uid://l2n30mpbkdyw" path="res://addons/godot-xr-tools/hands/scenes/lowpoly/right_hand_low.tscn" id="15_righthandlow"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0wfyh"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -97,7 +95,6 @@ xr_origin = NodePath("..")
 [node name="RightHandController" type="XRController3D" parent="XROrigin3D" unique_id=559462315]
 script = ExtResource("13_xrcontrollerfallback")
 render_model_manager = NodePath("OpenXRRenderModelManager")
-fallback_visual = NodePath("FallbackHand")
 tracker = &"right_hand"
 pose = &"grip"
 show_when_tracked = true
@@ -106,12 +103,9 @@ show_when_tracked = true
 tracker = 3
 make_local_to_pose = "grip"
 
-[node name="FallbackHand" parent="XROrigin3D/RightHandController" instance=ExtResource("15_righthandlow")]
-
 [node name="LeftHandController" type="XRController3D" parent="XROrigin3D" unique_id=439232952]
 script = ExtResource("13_xrcontrollerfallback")
 render_model_manager = NodePath("OpenXRRenderModelManager")
-fallback_visual = NodePath("FallbackHand")
 tracker = &"left_hand"
 pose = &"grip"
 show_when_tracked = true
@@ -119,8 +113,6 @@ show_when_tracked = true
 [node name="OpenXRRenderModelManager" type="OpenXRRenderModelManager" parent="XROrigin3D/LeftHandController" unique_id=1213281294]
 tracker = 2
 make_local_to_pose = "grip"
-
-[node name="FallbackHand" parent="XROrigin3D/LeftHandController" instance=ExtResource("14_lefthandlow")]
 
 [node name="XRRobotInput" type="Node" parent="XROrigin3D" unique_id=120000001]
 script = ExtResource("12_xrinput")
