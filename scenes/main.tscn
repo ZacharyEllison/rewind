@@ -11,6 +11,7 @@
 [ext_resource type="Script" uid="uid://hud001" path="res://assets/scripts/HUD.gd" id="9_hud001"]
 [ext_resource type="Script" uid="uid://xrhud01" path="res://assets/scripts/XRHUD.gd" id="10_xrhud"]
 [ext_resource type="Script" uid="uid://grablocomot" path="res://assets/scripts/_systems/XRGrabLocomotion.gd" id="11_grablocomot"]
+[ext_resource type="PackedScene" uid="uid://b4ysuy43poobf" path="res://addons/godot-xr-tools/functions/function_pickup.tscn" id="12_pickup"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0wfyh"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -91,11 +92,15 @@ show_when_tracked = true
 
 [node name="OpenXRRenderModel" type="OpenXRRenderModel" parent="XROrigin3D/RightHandController" unique_id=600000010]
 
+[node name="FunctionPickup" parent="XROrigin3D/RightHandController" unique_id=600000012 instance=ExtResource("12_pickup")]
+
 [node name="LeftHandController" type="XRController3D" parent="XROrigin3D" unique_id=439232952]
 tracker = &"left_hand"
 show_when_tracked = true
 
 [node name="OpenXRRenderModel" type="OpenXRRenderModel" parent="XROrigin3D/LeftHandController" unique_id=600000011]
+
+[node name="FunctionPickup" parent="XROrigin3D/LeftHandController" unique_id=600000013 instance=ExtResource("12_pickup")]
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=700000001]
 script = ExtResource("9_hud001")
