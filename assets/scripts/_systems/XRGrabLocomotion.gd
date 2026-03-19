@@ -1,7 +1,7 @@
 ## XRGrabLocomotion.gd
-## Provides stick locomotion for VR. When the player holds the thumbstick
-## click (primary_click) on either controller and pushes the stick, the
-## XROrigin moves through the world relative to the headset facing direction.
+## Provides camera-drag locomotion for VR. When the player holds the thumbstick
+## click (primary_click) on either controller and deflects the stick, the
+## XROrigin moves opposite the stick direction relative to the headset view.
 
 extends Node
 
@@ -31,7 +31,7 @@ func _physics_process(delta: float) -> void:
 	if stick == Vector2.ZERO:
 		return
 
-	var move_dir := _get_move_direction(stick)
+	var move_dir := _get_drag_direction(stick)
 	if move_dir == Vector3.ZERO:
 		return
 
@@ -58,10 +58,10 @@ func _get_pressed_stick(controller: XRController3D) -> Vector2:
 	return stick
 
 
-func _get_move_direction(stick: Vector2) -> Vector3:
+func _get_drag_direction(stick: Vector2) -> Vector3:
 	var basis_source: Node3D = _xr_camera if _xr_camera else xr_origin
 	if not basis_source:
-		return Vector3(stick.x, 0.0, -stick.y).normalized() * minf(stick.length(), 1.0)
+		return Vector3(-stick.x, 0.0, stick.y).normalized() * minf(stick.length(), 1.0)
 
 	var forward := -basis_source.global_transform.basis.z
 	forward.y = 0.0
@@ -80,4 +80,4 @@ func _get_move_direction(stick: Vector2) -> Vector3:
 	var move := (right * stick.x) + (forward * stick.y)
 	if move.length_squared() <= 0.0001:
 		return Vector3.ZERO
-	return move.normalized() * minf(stick.length(), 1.0)
+	return -move.normalized() * minf(stick.length(), 1.0)
