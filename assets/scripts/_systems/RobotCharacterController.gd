@@ -71,7 +71,7 @@ func _check_rewind_trigger() -> void:
 	if pressed and not _rewind_was_pressed:
 		if game_manager:
 			if game_manager.is_recording_active():
-				game_manager.trigger_rewind()
+				game_manager.trigger_rewind("fallback")
 			else:
 				game_manager.start_new_attempt()
 				game_manager.start_recording()

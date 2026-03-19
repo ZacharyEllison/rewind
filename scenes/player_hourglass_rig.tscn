@@ -1,0 +1,77 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://assets/scripts/_systems/HourglassPedestal.gd" id="1_pedestal"]
+[ext_resource type="PackedScene" path="res://scenes/hourglass.tscn" id="2_hourglass"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_base"]
+height = 0.18
+radius = 0.11
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_base"]
+top_radius = 0.11
+bottom_radius = 0.11
+height = 0.18
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_base"]
+albedo_color = Color(0.269, 0.222, 0.16, 1)
+emission_enabled = true
+emission = Color(0.11, 0.085, 0.035, 1)
+emission_energy_multiplier = 0.35
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_cap"]
+top_radius = 0.145
+bottom_radius = 0.145
+height = 0.03
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cap"]
+albedo_color = Color(0.55, 0.43, 0.22, 1)
+emission_enabled = true
+emission = Color(0.18, 0.12, 0.04, 1)
+emission_energy_multiplier = 0.5
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_trigger"]
+size = Vector3(0.26, 0.22, 0.26)
+
+[node name="PlayerHourglassRig" type="Node3D" node_paths=PackedStringArray("hourglass_path", "rest_anchor_path", "snap_anchor_path", "trigger_area_path")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45, 0, -0.55)
+script = ExtResource("1_pedestal")
+hourglass_path = NodePath("Hourglass")
+rest_anchor_path = NodePath("RestAnchor")
+snap_anchor_path = NodePath("SnapAnchor")
+trigger_area_path = NodePath("TriggerArea")
+
+[node name="PedestalBody" type="AnimatableBody3D" parent="."]
+sync_to_physics = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PedestalBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.09, 0)
+shape = SubResource("CylinderShape3D_base")
+
+[node name="PedestalBaseMesh" type="MeshInstance3D" parent="PedestalBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.09, 0)
+mesh = SubResource("CylinderMesh_base")
+surface_material_override/0 = SubResource("StandardMaterial3D_base")
+
+[node name="PedestalCapMesh" type="MeshInstance3D" parent="PedestalBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.185, 0)
+mesh = SubResource("CylinderMesh_cap")
+surface_material_override/0 = SubResource("StandardMaterial3D_cap")
+
+[node name="RestAnchor" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.275, 0)
+
+[node name="SnapAnchor" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -1, 8.74228e-08, 0, -8.74228e-08, -1, 0, 0.275, 0)
+
+[node name="TriggerArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 5
+monitoring = true
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TriggerArea"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.24, 0)
+shape = SubResource("BoxShape3D_trigger")
+
+[node name="Hourglass" parent="." instance=ExtResource("2_hourglass")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.275, 0)

@@ -12,6 +12,8 @@
 [ext_resource type="Script" path="res://assets/scripts/_systems/XRGrabLocomotion.gd" id="11_grablocomot"]
 [ext_resource type="Script" uid="uid://buvpojeeu8m43" path="res://assets/scripts/_systems/XRRobotInput.gd" id="12_xrinput"]
 [ext_resource type="Script" path="res://assets/scripts/_systems/XRControllerVisualFallback.gd" id="13_xrcontrollerfallback"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/functions/function_pickup.tscn" id="14_functionpickup"]
+[ext_resource type="PackedScene" path="res://scenes/player_hourglass_rig.tscn" id="15_hourglassrig"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0wfyh"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -81,6 +83,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.5666535)
 [node name="OpenXRRenderModelManager" type="OpenXRRenderModelManager" parent="XROrigin3D"]
 tracker = 1
 
+[node name="PlayerHourglassRig" parent="XROrigin3D" instance=ExtResource("15_hourglassrig")]
+
 [node name="XRHUD" type="Node3D" parent="XROrigin3D/XRCamera3D" unique_id=900000001]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.45000005, -0.5999999)
 script = ExtResource("10_xrhud")
@@ -98,6 +102,8 @@ tracker = &"right_hand"
 pose = &"grip"
 show_when_tracked = true
 
+[node name="FunctionPickup" parent="XROrigin3D/RightHandController" instance=ExtResource("14_functionpickup")]
+
 [node name="OpenXRRenderModelManager" type="OpenXRRenderModelManager" parent="XROrigin3D/RightHandController" unique_id=1213281293]
 tracker = 3
 make_local_to_pose = "grip"
@@ -108,6 +114,8 @@ render_model_manager = NodePath("OpenXRRenderModelManager")
 tracker = &"left_hand"
 pose = &"grip"
 show_when_tracked = true
+
+[node name="FunctionPickup" parent="XROrigin3D/LeftHandController" instance=ExtResource("14_functionpickup")]
 
 [node name="OpenXRRenderModelManager" type="OpenXRRenderModelManager" parent="XROrigin3D/LeftHandController" unique_id=1213281294]
 tracker = 2

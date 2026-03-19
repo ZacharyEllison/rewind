@@ -8,8 +8,11 @@ extends Node3D
 var _run_label: Label3D
 var _crystal_label: Label3D
 var _ghost_label: Label3D
+var _tutorial_label: Label3D
+var _fallback_label: Label3D
 
 var _game_manager = null
+var _hourglass_tutorial_hidden: bool = false
 
 
 func _ready() -> void:
@@ -21,7 +24,7 @@ func _ready() -> void:
 func _build_background() -> void:
 	var mesh_instance := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
-	plane.size = Vector2(0.6, 0.12)
+	plane.size = Vector2(1.0, 0.22)
 
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(0, 0, 0, 0.6)
@@ -50,9 +53,19 @@ func _make_label(text: String, pos: Vector3) -> Label3D:
 
 
 func _build_labels() -> void:
-	_run_label     = _make_label("Run #1",   Vector3(-0.18, 0, 0.001))
-	_crystal_label = _make_label("\u25C6 0",  Vector3(0,     0, 0.001))
-	_ghost_label   = _make_label("G 0/1", Vector3(0.18, 0, 0.001))
+	_run_label = _make_label("Run #1", Vector3(-0.28, 0.055, 0.001))
+	_crystal_label = _make_label("\u25C6 0", Vector3(0.0, 0.055, 0.001))
+	_ghost_label = _make_label("G 0/1", Vector3(0.28, 0.055, 0.001))
+
+	_tutorial_label = _make_label(
+		"Grip hourglass. Drop upside-down on pedestal to rewind.",
+		Vector3(0.0, -0.005, 0.001)
+	)
+	_tutorial_label.font_size = 18
+
+	_fallback_label = _make_label("Fallback: B/Y or Esc.", Vector3(0.0, -0.05, 0.001))
+	_fallback_label.font_size = 18
+	_set_tutorial_visible(true)
 
 
 func _connect_game_manager() -> void:
@@ -73,6 +86,9 @@ func _connect_game_manager() -> void:
 
 	if _game_manager.has_signal("rewind_completed"):
 		_game_manager.rewind_completed.connect(_on_rewind_completed)
+
+	if _game_manager.has_signal("rewind_triggered"):
+		_game_manager.rewind_triggered.connect(_on_rewind_triggered)
 
 
 # Signal handlers
@@ -95,3 +111,17 @@ func _on_rewind_completed() -> void:
 	var used: int = _game_manager.past_runs.size()
 	var max_slots: int = _game_manager.max_ghost_slots
 	_ghost_label.text = "G %d/%d" % [used, max_slots]
+
+
+func _on_rewind_triggered(source: String) -> void:
+	if source != "hourglass" or _hourglass_tutorial_hidden:
+		return
+	_hourglass_tutorial_hidden = true
+	_set_tutorial_visible(false)
+
+
+func _set_tutorial_visible(visible: bool) -> void:
+	if _tutorial_label:
+		_tutorial_label.visible = visible
+	if _fallback_label:
+		_fallback_label.visible = visible

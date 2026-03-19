@@ -21,17 +21,17 @@ func _build_mesh() -> void:
 	# Each face is a triangle; normals are computed per face.
 	# Top pyramid: 4 faces (top, v0, v1), (top, v1, v2), (top, v2, v3), (top, v3, v0)
 	# Bottom pyramid: 4 faces (bottom, v1, v0), (bottom, v2, v1), (bottom, v3, v2), (bottom, v0, v3)
-	var face_tris: Array = [
+	var face_tris: Array[PackedVector3Array] = [
 		# top pyramid
-		[top, v0, v1],
-		[top, v1, v2],
-		[top, v2, v3],
-		[top, v3, v0],
+		PackedVector3Array([top, v0, v1]),
+		PackedVector3Array([top, v1, v2]),
+		PackedVector3Array([top, v2, v3]),
+		PackedVector3Array([top, v3, v0]),
 		# bottom pyramid (winding reversed so normals face outward)
-		[bottom, v1, v0],
-		[bottom, v2, v1],
-		[bottom, v3, v2],
-		[bottom, v0, v3],
+		PackedVector3Array([bottom, v1, v0]),
+		PackedVector3Array([bottom, v2, v1]),
+		PackedVector3Array([bottom, v3, v2]),
+		PackedVector3Array([bottom, v0, v3]),
 	]
 
 	var verts  := PackedVector3Array()
@@ -39,7 +39,7 @@ func _build_mesh() -> void:
 	var indices := PackedInt32Array()
 
 	for i in face_tris.size():
-		var tri: Array = face_tris[i]
+		var tri: PackedVector3Array = face_tris[i]
 		var a: Vector3 = tri[0]
 		var b: Vector3 = tri[1]
 		var c: Vector3 = tri[2]

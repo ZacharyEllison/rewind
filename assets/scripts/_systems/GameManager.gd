@@ -10,6 +10,7 @@ const RECORD_INTERVAL: float = 0.1
 signal robot_moved
 signal recording_started(count: int, duration: float)
 signal recording_stopped
+signal rewind_triggered(source: String)
 signal rewinding_started(position_count: int)
 signal rewind_completed
 signal ghost_playback_requested
@@ -111,15 +112,17 @@ func stop_recording() -> void:
 
 	emit_signal("recording_stopped")
 
-func trigger_rewind() -> void:
+func trigger_rewind(source: String = "unknown") -> bool:
 	if recorded_positions.is_empty():
 		print("ERROR: Cannot rewind - no positions recorded")
-		return
+		return false
 
 	stop_recording()
+	emit_signal("rewind_triggered", source)
 	_store_current_run()
 	_begin_next_attempt_with_ghosts()
-	print("Rewind triggered - Playback %d retained run(s), next live attempt started" % past_runs.size())
+	print("Rewind triggered (%s) - Playback %d retained run(s), next live attempt started" % [source, past_runs.size()])
+	return true
 
 func start_new_attempt() -> void:
 	is_recording = false

@@ -45,7 +45,7 @@ func _ensure_ghost_pool_size(desired_size: int) -> void:
 		add_child(new_ghost)
 		_ghost_pool.append(new_ghost)
 	while _ghost_pool.size() > target_size and _ghost_pool.size() > 1:
-		var old_ghost := _ghost_pool.pop_back()
+		var old_ghost: Node = _ghost_pool.pop_back()
 		old_ghost.stop_playback()
 		old_ghost.queue_free()
 	if _ghost_pool.size() != previous_size:
