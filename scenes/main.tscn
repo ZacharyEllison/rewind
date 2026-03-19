@@ -90,13 +90,21 @@ xr_origin = NodePath("..")
 
 [node name="RightHandController" type="XRController3D" parent="XROrigin3D" unique_id=559462315]
 tracker = &"right_hand"
+pose = &"grip"
 show_when_tracked = true
+
+[node name="OpenXRRenderModelManager" type="OpenXRRenderModelManager" parent="XROrigin3D/RightHandController" unique_id=1213281293]
+tracker = 3
+make_local_to_pose = "grip"
 
 [node name="LeftHandController" type="XRController3D" parent="XROrigin3D" unique_id=439232952]
 tracker = &"left_hand"
+pose = &"grip"
 show_when_tracked = true
 
-[node name="OpenXRRenderModelManager" type="OpenXRRenderModelManager" parent="XROrigin3D" unique_id=1213281292]
+[node name="OpenXRRenderModelManager" type="OpenXRRenderModelManager" parent="XROrigin3D/LeftHandController" unique_id=1213281294]
+tracker = 2
+make_local_to_pose = "grip"
 
 [node name="XRRobotInput" type="Node" parent="XROrigin3D" unique_id=120000001]
 script = ExtResource("12_xrinput")
