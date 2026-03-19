@@ -1,12 +1,10 @@
 ## RobotCharacterController
-## Platformer physics (gravity, accel/decel, jump) with VR joystick input from either controller.
-## Movement direction is relative to XRCamera3D — no follow camera needed.
+## Platformer physics (gravity, accel/decel, jump) with VR joystick input.
+## XR input is provided by an XRRobotInput node living under XROrigin3D.
 
 extends CharacterBody3D
 
-@export var left_controller: XRController3D
-@export var right_controller: XRController3D
-@export var xr_camera: XRCamera3D
+@export var xr_input: XRRobotInput
 
 @export_group("Movement")
 @export var max_speed: float = 6.0
@@ -17,10 +15,6 @@ extends CharacterBody3D
 
 @export_group("Jump")
 @export var jump_velocity: float = 12.5
-@export var jump_button_action: String = "ax_button"
-
-@export_group("Rewind")
-@export var rewind_button_action: String = "by_button"
 
 @export_group("Input")
 @export var input_deadzone: float = 0.2
@@ -47,7 +41,6 @@ func _ready() -> void:
 	game_manager = get_parent().get_node_or_null("GameManager")
 	spawn_position = global_position
 	print("RobotController Ready - max_speed: %.1f, jump: %.1f" % [max_speed, jump_velocity])
-	# Auto-start recording immediately so the first run is captured
 	if game_manager:
 		game_manager.start_recording()
 
@@ -55,7 +48,6 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	_check_fall()
 	_check_rewind_trigger()
-	# Block movement during rewind playback
 	if game_manager and game_manager.is_rewinding_active():
 		move_and_slide()
 		return
@@ -71,25 +63,19 @@ func _physics_process(delta: float) -> void:
 
 func _check_rewind_trigger() -> void:
 	var pressed := false
-	if left_controller and left_controller.get_is_active():
-		pressed = pressed or left_controller.is_button_pressed(rewind_button_action)
-	if right_controller and right_controller.get_is_active():
-		pressed = pressed or right_controller.is_button_pressed(rewind_button_action)
-	if Input.is_action_just_pressed("ui_cancel"):  # Escape - desktop fallback
+	if xr_input:
+		pressed = xr_input.is_rewind_pressed()
+	if Input.is_action_just_pressed("ui_cancel"):
 		pressed = true
 
-	# Edge-detect: only fire on the frame the button first goes down
 	if pressed and not _rewind_was_pressed:
 		if game_manager:
 			if game_manager.is_rewinding_active():
-				# Cancel ghost playback immediately
 				game_manager.complete_rewind()
 			elif game_manager.is_recording_active():
 				game_manager.stop_recording()
-				# Playback is driven by main.gd via the rewinding_started signal
 				game_manager.trigger_rewind()
 			else:
-				# Start a fresh attempt after rewind has finished
 				game_manager.start_new_attempt()
 				game_manager.start_recording()
 	_rewind_was_pressed = pressed
@@ -108,48 +94,26 @@ func respawn() -> void:
 	if not game_manager:
 		return
 	if game_manager.is_recording_active():
-		# Treat the fall as the natural end of the run — stop and show the ghost.
 		game_manager.stop_recording()
 		game_manager.trigger_rewind()
 	elif not game_manager.is_rewinding_active():
-		# Fell before recording anything — start fresh immediately.
 		game_manager.start_recording()
 
 
 # --- Input ---
 
-# Returns the thumbstick vector from whichever controller has greater magnitude.
-# Using the larger magnitude (not sum) prevents accidental speed doubling when a
-# resting hand drifts slightly on the stick.
 func _get_combined_stick() -> Vector2:
-	var left_vec := Vector2.ZERO
-	var right_vec := Vector2.ZERO
+	var controller_vec := Vector2.ZERO
+	if xr_input:
+		controller_vec = xr_input.get_stick()
 
-	if left_controller and left_controller.get_is_active():
-		left_vec = left_controller.get_vector2("primary")
-		if left_vec.length() < input_deadzone:
-			left_vec = Vector2.ZERO
-
-	if right_controller and right_controller.get_is_active():
-		right_vec = right_controller.get_vector2("primary")
-		if right_vec.length() < input_deadzone:
-			right_vec = Vector2.ZERO
-
-	var controller_vec: Vector2
-	if left_vec.length_squared() >= right_vec.length_squared():
-		controller_vec = left_vec
-	else:
-		controller_vec = right_vec
-
-	# Desktop keyboard fallback: WASD and arrow keys checked directly.
-	# Positive X = strafe right, positive Y = forward (maps to -Z in world space).
+	# Desktop keyboard fallback
 	var kb_x := (float(Input.is_key_pressed(KEY_D)) + float(Input.is_key_pressed(KEY_RIGHT))) \
 			  - (float(Input.is_key_pressed(KEY_A)) + float(Input.is_key_pressed(KEY_LEFT)))
 	var kb_y := (float(Input.is_key_pressed(KEY_W)) + float(Input.is_key_pressed(KEY_UP))) \
 			  - (float(Input.is_key_pressed(KEY_S)) + float(Input.is_key_pressed(KEY_DOWN)))
 	var kb_vec := Vector2(clamp(kb_x, -1.0, 1.0), clamp(kb_y, -1.0, 1.0))
 
-	# Prefer whichever source has greater magnitude.
 	if kb_vec.length_squared() > controller_vec.length_squared():
 		return kb_vec
 	return controller_vec
@@ -162,20 +126,14 @@ func _apply_horizontal_movement(delta: float) -> void:
 	var move_dir := Vector3.ZERO
 
 	if stick.length_squared() > 0.0:
-		# Only use XRCamera3D orientation when a physical controller is actually tracked.
-		# In desktop mode xr_camera is non-null but its basis may be garbage from the
-		# XR runtime, causing keyboard X-axis input to collapse to zero after y-flatten.
-		var any_controller_active := (left_controller and left_controller.get_is_active()) \
-								  or (right_controller and right_controller.get_is_active())
-		if xr_camera and any_controller_active:
-			var cam_basis := xr_camera.global_transform.basis
-			move_dir = cam_basis * Vector3(stick.x, 0.0, -stick.y)
+		var xr_cam: XRCamera3D = xr_input.get_xr_camera() if xr_input else null
+		var any_active := xr_input != null and xr_input.any_active()
+		if xr_cam and any_active:
+			move_dir = xr_cam.global_transform.basis * Vector3(stick.x, 0.0, -stick.y)
 		else:
-			# Desktop: use the active flat Camera3D, or fall back to world-space axes.
 			var cam3d := get_viewport().get_camera_3d()
 			if cam3d:
-				var cam_basis := cam3d.global_transform.basis
-				move_dir = cam_basis * Vector3(stick.x, 0.0, -stick.y)
+				move_dir = cam3d.global_transform.basis * Vector3(stick.x, 0.0, -stick.y)
 			else:
 				move_dir = Vector3(stick.x, 0.0, -stick.y)
 		move_dir.y = 0.0
@@ -189,8 +147,6 @@ func _apply_horizontal_movement(delta: float) -> void:
 	var accel_factor := 1.0 if is_on_floor() else air_accel_factor
 
 	if move_dir != Vector3.ZERO:
-		# Set to full speed immediately for snappy platformer feel.
-		# Air movement is still reduced by accel_factor for better jump control.
 		var target_speed := max_speed * accel_factor if not is_on_floor() else max_speed
 		velocity.x = move_dir.x * target_speed
 		velocity.z = move_dir.z * target_speed
@@ -208,32 +164,20 @@ func _apply_horizontal_movement(delta: float) -> void:
 
 func _apply_jump() -> void:
 	var jump_pressed := false
-
-	if left_controller and left_controller.get_is_active():
-		jump_pressed = jump_pressed or left_controller.is_button_pressed(jump_button_action)
-	if right_controller and right_controller.get_is_active():
-		jump_pressed = jump_pressed or right_controller.is_button_pressed(jump_button_action)
-
-	# Desktop fallback — ui_accept (Space) needs no InputMap entry
+	if xr_input:
+		jump_pressed = xr_input.is_jump_pressed()
 	if Input.is_action_just_pressed("ui_accept"):
 		jump_pressed = true
-
 	if jump_pressed and is_on_floor():
 		velocity.y = jump_velocity
 
 
 ## Smoothly rotate the mesh child to face the movement direction.
-## Rotates the visual child only — CharacterBody3D capsule stays axis-aligned.
 func _update_facing(delta: float) -> void:
-	# Guard: Basis.looking_at() is undefined for a zero-length direction vector.
 	if _facing_dir == Vector3.ZERO:
 		return
-	# Prefer the exported reference; fall back to the hard-coded child name so
-	# existing scenes without the Inspector assignment still work.
 	var mesh: Node3D = robot_mesh if robot_mesh else get_node_or_null("robot_gobot") as Node3D
 	if not mesh:
 		return
-	# Negate: looking_at() aligns local -Z to the target, but the robot mesh's
-	# visual front is +Z, so we pass the opposite direction to make +Z face movement.
 	var target_basis := Basis.looking_at(-_facing_dir, Vector3.UP)
 	mesh.global_transform.basis = mesh.global_transform.basis.slerp(target_basis, turn_speed * delta)

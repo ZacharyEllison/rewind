@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://assets/scripts/HUD.gd" id="9_hud001"]
 [ext_resource type="Script" path="res://assets/scripts/XRHUD.gd" id="10_xrhud"]
 [ext_resource type="Script" path="res://assets/scripts/_systems/XRGrabLocomotion.gd" id="11_grablocomot"]
+[ext_resource type="Script" path="res://assets/scripts/_systems/XRRobotInput.gd" id="12_xrinput"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0wfyh"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -47,9 +48,7 @@ shadow_enabled = true
 [node name="RobotCharacter" type="CharacterBody3D" parent="." unique_id=300000001]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 script = ExtResource("4_rc001")
-left_controller = NodePath("../XROrigin3D/LeftHandController")
-right_controller = NodePath("../XROrigin3D/RightHandController")
-xr_camera = NodePath("../XROrigin3D/XRCamera3D")
+xr_input = NodePath("XROrigin3D/XRRobotInput")
 max_speed = 5.0
 acceleration = 10.0
 deceleration = 10.0
@@ -98,6 +97,9 @@ tracker = &"left_hand"
 show_when_tracked = true
 
 [node name="OpenXRRenderModelManager" type="OpenXRRenderModelManager" parent="XROrigin3D" unique_id=1213281292]
+
+[node name="XRRobotInput" type="Node" parent="XROrigin3D" unique_id=120000001]
+script = ExtResource("12_xrinput")
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=700000001]
 script = ExtResource("9_hud001")
