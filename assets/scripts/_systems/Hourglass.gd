@@ -69,7 +69,7 @@ func _build_mesh() -> void:
 
 	# Parameters
 	const SEGMENTS: int = 8
-	const HALF_HEIGHT: float = 0.09   # shorter silhouette for the two bulb ends
+	const HALF_HEIGHT: float = 0.075  # shorter silhouette for the two bulb ends
 	const BASE_RADIUS: float = 0.07   # wide end radius
 
 	# Build both cones with their wide ends on the outside and their tips
@@ -77,7 +77,7 @@ func _build_mesh() -> void:
 	for cone_idx in range(2):
 		var sign := 1.0 if cone_idx == 0 else -1.0   # +1 = upper, -1 = lower
 		var tip_y := 0.0
-		var base_y := sign * HALF_HEIGHT * 2.0
+		var base_y := sign * HALF_HEIGHT
 
 		var arrays := []
 		arrays.resize(Mesh.ARRAY_MAX)
@@ -94,12 +94,20 @@ func _build_mesh() -> void:
 			var p0 := Vector3(cos(a0) * r, base_y, sin(a0) * r)
 			var p1 := Vector3(cos(a1) * r, base_y, sin(a1) * r)
 
+			# Reverse the lower cone winding so both halves render from the outside.
+			var v0 := p_apex
+			var v1 := p0
+			var v2 := p1
+			if sign < 0.0:
+				v1 = p1
+				v2 = p0
+
 			# Face normal (flat shading)
-			var edge1 := p0 - p_apex
-			var edge2 := p1 - p_apex
+			var edge1 := v1 - v0
+			var edge2 := v2 - v0
 			var n := edge1.cross(edge2).normalized() * sign
 
-			verts.append_array([p_apex, p0, p1])
+			verts.append_array([v0, v1, v2])
 			normals.append_array([n, n, n])
 
 		arrays[Mesh.ARRAY_VERTEX] = verts
@@ -112,6 +120,7 @@ func _build_mesh() -> void:
 	mat.emission_enabled = true
 	mat.emission = Color(1.0, 0.5, 0.0)
 	mat.emission_energy_multiplier = 1.2
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 
 	for surf in range(arr_mesh.get_surface_count()):

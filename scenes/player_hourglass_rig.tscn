@@ -58,10 +58,10 @@ mesh = SubResource("CylinderMesh_cap")
 surface_material_override/0 = SubResource("StandardMaterial3D_cap")
 
 [node name="RestAnchor" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.275, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.31, 0)
 
 [node name="SnapAnchor" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, -1, 8.74228e-08, 0, -8.74228e-08, -1, 0, 0.275, 0)
+transform = Transform3D(1, 0, 0, 0, -1, 8.74228e-08, 0, -8.74228e-08, -1, 0, 0.31, 0)
 
 [node name="TriggerArea" type="Area3D" parent="."]
 collision_layer = 0
@@ -74,4 +74,4 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.24, 0)
 shape = SubResource("BoxShape3D_trigger")
 
 [node name="Hourglass" parent="." instance=ExtResource("2_hourglass")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.275, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.31, 0)
