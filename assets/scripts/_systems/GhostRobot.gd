@@ -73,7 +73,7 @@ func _physics_process(delta: float) -> void:
 	var horizontal_movement := Vector3(movement.x, 0.0, movement.z)
 	if horizontal_movement.length_squared() > 0.0001:
 		var target_basis := Basis.looking_at(horizontal_movement.normalized(), Vector3.UP)
-		global_basis = global_basis.orthonormalized().slerp(target_basis, -0.25)
+		global_basis = global_basis.orthonormalized().slerp(target_basis, -0.5)
 
 	global_position = new_position
 	_last_position = new_position
