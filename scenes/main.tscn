@@ -8,9 +8,9 @@
 [ext_resource type="PackedScene" uid="uid://level01main" path="res://scenes/level_01.tscn" id="6_lvl01"]
 [ext_resource type="Script" uid="uid://ckhvuv3fy3bjd" path="res://assets/scripts/_systems/GhostRobot.gd" id="7_ghost"]
 [ext_resource type="Script" uid="uid://rd1drmo882nv" path="res://assets/scripts/_systems/RobotAnimationController.gd" id="8_anim"]
-[ext_resource type="Script" uid="uid://hud001" path="res://assets/scripts/HUD.gd" id="9_hud001"]
-[ext_resource type="Script" uid="uid://xrhud01" path="res://assets/scripts/XRHUD.gd" id="10_xrhud"]
-[ext_resource type="Script" uid="uid://grablocomot" path="res://assets/scripts/_systems/XRGrabLocomotion.gd" id="11_grablocomot"]
+[ext_resource type="Script" uid="uid://c710b55l00gho" path="res://assets/scripts/HUD.gd" id="9_hud001"]
+[ext_resource type="Script" uid="uid://yugahdcexr0r" path="res://assets/scripts/XRHUD.gd" id="10_xrhud"]
+[ext_resource type="Script" uid="uid://brinlmn4xd5b8" path="res://assets/scripts/_systems/XRGrabLocomotion.gd" id="11_grablocomot"]
 [ext_resource type="PackedScene" uid="uid://b4ysuy43poobf" path="res://addons/godot-xr-tools/functions/function_pickup.tscn" id="12_pickup"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0wfyh"]
@@ -34,7 +34,6 @@ height = 0.9
 script = ExtResource("5_main01")
 
 [node name="GameManager" type="Node" parent="." unique_id=100000001]
-groups = ["game_manager"]
 script = ExtResource("3_gm001")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2066679643]
@@ -78,7 +77,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4872775, 2.1425269)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.909086)
 
 [node name="XRHUD" type="Node3D" parent="XROrigin3D/XRCamera3D" unique_id=900000001]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.18, -0.6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.45000005, -0.5999999)
 script = ExtResource("10_xrhud")
 
 [node name="XRGrabLocomotion" type="Node" parent="XROrigin3D" unique_id=800000001]
@@ -90,17 +89,19 @@ right_controller = NodePath("../RightHandController")
 tracker = &"right_hand"
 show_when_tracked = true
 
-[node name="OpenXRRenderModel" type="OpenXRRenderModel" parent="XROrigin3D/RightHandController" unique_id=600000010]
-
 [node name="FunctionPickup" parent="XROrigin3D/RightHandController" unique_id=600000012 instance=ExtResource("12_pickup")]
 
 [node name="LeftHandController" type="XRController3D" parent="XROrigin3D" unique_id=439232952]
 tracker = &"left_hand"
 show_when_tracked = true
 
-[node name="OpenXRRenderModel" type="OpenXRRenderModel" parent="XROrigin3D/LeftHandController" unique_id=600000011]
-
 [node name="FunctionPickup" parent="XROrigin3D/LeftHandController" unique_id=600000013 instance=ExtResource("12_pickup")]
+
+[node name="OpenXRRenderModelManager" type="OpenXRRenderModelManager" parent="XROrigin3D" unique_id=1213281292]
+
+[node name="left" type="OpenXRRenderModel" parent="XROrigin3D/OpenXRRenderModelManager" unique_id=600000011]
+
+[node name="right" type="OpenXRRenderModel" parent="XROrigin3D/OpenXRRenderModelManager" unique_id=600000010]
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=700000001]
 script = ExtResource("9_hud001")

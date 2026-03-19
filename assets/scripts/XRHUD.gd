@@ -52,7 +52,7 @@ func _make_label(text: String, pos: Vector3) -> Label3D:
 func _build_labels() -> void:
 	_run_label     = _make_label("Run #1",   Vector3(-0.18, 0, 0.001))
 	_crystal_label = _make_label("\u25C6 0",  Vector3(0,     0, 0.001))
-	_ghost_label   = _make_label("\U0001F47B 0/1", Vector3(0.18, 0, 0.001))
+	_ghost_label   = _make_label("G 0/1", Vector3(0.18, 0, 0.001))
 
 
 func _connect_game_manager() -> void:
@@ -86,7 +86,7 @@ func _on_sand_crystal_collected(count: int) -> void:
 
 
 func _on_ghost_slots_changed(used: int, max_slots: int) -> void:
-	_ghost_label.text = "\U0001F47B %d/%d" % [used, max_slots]
+	_ghost_label.text = "G %d/%d" % [used, max_slots]
 
 
 func _on_rewind_completed() -> void:
@@ -94,4 +94,4 @@ func _on_rewind_completed() -> void:
 		return
 	var used: int = _game_manager.past_runs.size()
 	var max_slots: int = _game_manager.max_ghost_slots
-	_ghost_label.text = "\U0001F47B %d/%d" % [used, max_slots]
+	_ghost_label.text = "G %d/%d" % [used, max_slots]
