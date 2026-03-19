@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bxhwg4umeeers"]
 
-[ext_resource type="PackedScene" uid="uid://b0ymi1igjbglw" path="res://assets/models/robot_gobot.glb" id="1_o5qli"]
+[ext_resource type="PackedScene" uid="uid://btl6gxtms558y" path="res://assets/models/robot_gobot.glb" id="1_o5qli"]
 [ext_resource type="PackedScene" uid="uid://clc5dre31iskm" path="res://addons/godot-xr-tools/xr/start_xr.tscn" id="2_0wfyh"]
 [ext_resource type="Script" uid="uid://b0v4tdsbspp7v" path="res://assets/scripts/_systems/GameManager.gd" id="3_gm001"]
 [ext_resource type="Script" uid="uid://b3b33nyudaioo" path="res://assets/scripts/_systems/RobotCharacterController.gd" id="4_rc001"]
@@ -11,7 +11,7 @@
 [ext_resource type="Script" path="res://assets/scripts/HUD.gd" id="9_hud001"]
 [ext_resource type="Script" path="res://assets/scripts/XRHUD.gd" id="10_xrhud"]
 [ext_resource type="Script" path="res://assets/scripts/_systems/XRGrabLocomotion.gd" id="11_grablocomot"]
-[ext_resource type="Script" path="res://assets/scripts/_systems/XRRobotInput.gd" id="12_xrinput"]
+[ext_resource type="Script" uid="uid://buvpojeeu8m43" path="res://assets/scripts/_systems/XRRobotInput.gd" id="12_xrinput"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0wfyh"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
