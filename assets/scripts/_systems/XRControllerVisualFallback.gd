@@ -65,7 +65,7 @@ func _build_fallback_visual() -> Node3D:
 	var grip_mesh := MeshInstance3D.new()
 	var grip_shape := CapsuleMesh.new()
 	grip_shape.radius = 0.018
-	grip_shape.mid_height = 0.10
+	grip_shape.height = 0.136
 	grip_mesh.mesh = grip_shape
 	grip_mesh.material_override = body_material
 	grip_mesh.position = Vector3(0.0, -0.04, 0.015)

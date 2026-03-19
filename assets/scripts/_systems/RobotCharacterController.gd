@@ -38,14 +38,17 @@ func _ready() -> void:
 	var g_mag: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 	var g_dir: Vector3 = ProjectSettings.get_setting("physics/3d/default_gravity_vector")
 	_gravity = g_dir * g_mag
+	_resolve_xr_input()
 	game_manager = get_parent().get_node_or_null("GameManager")
 	spawn_position = global_position
-	print("RobotController Ready - max_speed: %.1f, jump: %.1f" % [max_speed, jump_velocity])
+	print("RobotController Ready - max_speed: %.1f, jump: %.1f, xr_input=%s" % [max_speed, jump_velocity, str(xr_input)])
 	if game_manager:
 		game_manager.start_recording()
 
 
 func _physics_process(delta: float) -> void:
+	if not xr_input:
+		_resolve_xr_input()
 	_check_fall()
 	_check_rewind_trigger()
 	if game_manager and game_manager.is_rewinding_active():
@@ -181,3 +184,15 @@ func _update_facing(delta: float) -> void:
 		return
 	var target_basis := Basis.looking_at(-_facing_dir, Vector3.UP)
 	mesh.global_transform.basis = mesh.global_transform.basis.slerp(target_basis, turn_speed * delta)
+
+
+func _resolve_xr_input() -> void:
+	if xr_input and is_instance_valid(xr_input):
+		return
+
+	var scene_root := get_parent()
+	if scene_root:
+		xr_input = scene_root.get_node_or_null("XROrigin3D/XRRobotInput") as XRRobotInput
+
+	if not xr_input and scene_root:
+		xr_input = scene_root.find_child("XRRobotInput", true, false) as XRRobotInput

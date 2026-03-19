@@ -30,13 +30,15 @@ func get_stick() -> Vector2:
 	var left_vec := Vector2.ZERO
 	var right_vec := Vector2.ZERO
 	if _left and _left.get_is_active():
-		left_vec = _left.get_vector2("primary")
-		if left_vec.length() < input_deadzone:
-			left_vec = Vector2.ZERO
+		if not _left.is_button_pressed("primary_click"):
+			left_vec = _left.get_vector2("primary")
+			if left_vec.length() < input_deadzone:
+				left_vec = Vector2.ZERO
 	if _right and _right.get_is_active():
-		right_vec = _right.get_vector2("primary")
-		if right_vec.length() < input_deadzone:
-			right_vec = Vector2.ZERO
+		if not _right.is_button_pressed("primary_click"):
+			right_vec = _right.get_vector2("primary")
+			if right_vec.length() < input_deadzone:
+				right_vec = Vector2.ZERO
 	if left_vec.length_squared() >= right_vec.length_squared():
 		return left_vec
 	return right_vec
