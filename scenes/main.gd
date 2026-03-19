@@ -14,6 +14,8 @@ var _ghost_template: Node = null
 
 ## Currently loaded level scene instance.
 var _current_level_scene: Node = null
+var _player_spawn_transform: Transform3D = Transform3D.IDENTITY
+var _has_player_spawn: bool = false
 
 func _ready() -> void:
 	var game_manager := $GameManager
@@ -27,6 +29,7 @@ func _ready() -> void:
 	# Load the starting level.
 	_load_level(game_manager.current_level)
 	game_manager.level_changed.connect(_on_level_changed)
+	game_manager.new_attempt_started.connect(_reset_player_to_level_spawn)
 
 	_ensure_ghost_pool_size(game_manager.max_ghost_slots)
 	game_manager.ghost_slots_changed.connect(_on_ghost_slots_changed)
@@ -133,7 +136,20 @@ func _load_level(level_id: int) -> void:
 	var spawn_pos: Vector3 = spawn_node.global_position if spawn_node else Vector3(0, 0.5, 0)
 	robot.global_position = spawn_pos
 	robot.set("spawn_position", spawn_pos)
-	print("Main: loaded level %d, robot spawn at %s" % [level_id, str(spawn_pos)])
+
+	var player_spawn_node := _current_level_scene.get_node_or_null("PlayerSpawnPoint") as Node3D
+	if player_spawn_node:
+		_player_spawn_transform = player_spawn_node.global_transform
+		_has_player_spawn = true
+		_reset_player_to_level_spawn()
+	else:
+		_has_player_spawn = false
+
+	print("Main: loaded level %d, robot spawn at %s, player spawn at %s" % [
+		level_id,
+		str(spawn_pos),
+		str(_player_spawn_transform.origin if _has_player_spawn else $XROrigin3D.global_position)
+	])
 
 
 ## Called when GameManager emits level_changed; transitions to the new level.
@@ -143,3 +159,14 @@ func _on_level_changed(level_id: int) -> void:
 	var game_manager := $GameManager
 	game_manager.start_new_attempt()
 	game_manager.start_recording()
+
+
+func _reset_player_to_level_spawn() -> void:
+	if not _has_player_spawn:
+		return
+
+	var xr_origin := $XROrigin3D as XROrigin3D
+	if not xr_origin:
+		return
+
+	xr_origin.global_transform = _player_spawn_transform

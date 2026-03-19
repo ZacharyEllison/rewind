@@ -50,6 +50,9 @@ size = Vector3(4, 0.4, 4)
 
 [node name="Level01" type="Node3D"]
 
+[node name="PlayerSpawnPoint" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4872775, 1.245059)
+
 [node name="StartPlatform" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 
