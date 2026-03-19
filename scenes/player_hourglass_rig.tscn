@@ -33,7 +33,7 @@ emission_energy_multiplier = 0.5
 size = Vector3(0.26, 0.22, 0.26)
 
 [node name="PlayerHourglassRig" type="Node3D" node_paths=PackedStringArray("hourglass_path", "rest_anchor_path", "snap_anchor_path", "trigger_area_path")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45, 0, -0.55)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0, -0.3)
 script = ExtResource("1_pedestal")
 hourglass_path = NodePath("Hourglass")
 rest_anchor_path = NodePath("RestAnchor")

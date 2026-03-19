@@ -20,6 +20,7 @@ func _ready() -> void:
 	_build_collision()
 	_ensure_return_timer()
 	picked_up.connect(_on_picked_up)
+	dropped.connect(_on_dropped)
 
 
 func is_upside_down() -> bool:
@@ -68,15 +69,15 @@ func _build_mesh() -> void:
 
 	# Parameters
 	const SEGMENTS: int = 8
-	const HALF_HEIGHT: float = 0.12   # half-height of each cone
+	const HALF_HEIGHT: float = 0.09   # shorter silhouette for the two bulb ends
 	const BASE_RADIUS: float = 0.07   # wide end radius
-	const NECK_RADIUS: float = 0.015  # narrow centre radius
 
-	# Build both cones (upper apex up, lower apex down)
+	# Build both cones with their wide ends on the outside and their tips
+	# meeting in the center, so the hourglass reads point-to-point.
 	for cone_idx in range(2):
 		var sign := 1.0 if cone_idx == 0 else -1.0   # +1 = upper, -1 = lower
-		var apex_y := sign * HALF_HEIGHT * 2.0        # tip of the cone
-		var base_y := sign * NECK_RADIUS              # neck end
+		var tip_y := 0.0
+		var base_y := sign * HALF_HEIGHT * 2.0
 
 		var arrays := []
 		arrays.resize(Mesh.ARRAY_MAX)
@@ -88,8 +89,8 @@ func _build_mesh() -> void:
 			var a1 := TAU * (i + 1) / SEGMENTS
 			var r: float = BASE_RADIUS if cone_idx == 0 else BASE_RADIUS
 
-			# Triangle: apex + two base edge points
-			var p_apex := Vector3(0.0, apex_y, 0.0)
+			# Triangle: shared center tip + two outer base edge points
+			var p_apex := Vector3(0.0, tip_y, 0.0)
 			var p0 := Vector3(cos(a0) * r, base_y, sin(a0) * r)
 			var p1 := Vector3(cos(a1) * r, base_y, sin(a1) * r)
 
@@ -150,6 +151,12 @@ func _ensure_return_timer() -> void:
 
 func _on_picked_up(_pickable) -> void:
 	cancel_pending_return()
+	sleeping = false
+
+
+func _on_dropped(_pickable) -> void:
+	if not freeze:
+		sleeping = false
 
 
 func _on_return_timer_timeout() -> void:
