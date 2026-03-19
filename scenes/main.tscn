@@ -9,7 +9,7 @@
 [ext_resource type="Script" uid="uid://ckhvuv3fy3bjd" path="res://assets/scripts/_systems/GhostRobot.gd" id="7_ghost"]
 [ext_resource type="Script" uid="uid://rd1drmo882nv" path="res://assets/scripts/_systems/RobotAnimationController.gd" id="8_anim"]
 [ext_resource type="Script" uid="uid://c710b55l00gho" path="res://assets/scripts/HUD.gd" id="9_hud001"]
-[ext_resource type="Script" uid="uid://yugahdcexr0r" path="res://assets/scripts/XRHUD.gd" id="10_xrhud"]
+[ext_resource type="Script" uid="uid://r7or82cxlo7x" path="res://assets/scripts/XRHUD.gd" id="10_xrhud"]
 [ext_resource type="Script" uid="uid://brinlmn4xd5b8" path="res://assets/scripts/_systems/XRGrabLocomotion.gd" id="11_grablocomot"]
 [ext_resource type="PackedScene" uid="uid://b4ysuy43poobf" path="res://addons/godot-xr-tools/functions/function_pickup.tscn" id="12_pickup"]
 
@@ -51,6 +51,9 @@ script = ExtResource("4_rc001")
 left_controller = NodePath("../XROrigin3D/LeftHandController")
 right_controller = NodePath("../XROrigin3D/RightHandController")
 xr_camera = NodePath("../XROrigin3D/XRCamera3D")
+max_speed = 5.0
+acceleration = 10.0
+deceleration = 10.0
 jump_velocity = 5.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="RobotCharacter" unique_id=300000002]
