@@ -12,6 +12,7 @@
 [ext_resource type="Script" uid="uid://r7or82cxlo7x" path="res://assets/scripts/XRHUD.gd" id="10_xrhud"]
 [ext_resource type="Script" uid="uid://brinlmn4xd5b8" path="res://assets/scripts/_systems/XRGrabLocomotion.gd" id="11_grablocomot"]
 [ext_resource type="PackedScene" uid="uid://b4ysuy43poobf" path="res://addons/godot-xr-tools/functions/function_pickup.tscn" id="12_pickup"]
+[ext_resource type="PackedScene" uid="uid://ctltchlf2j2r4" path="res://addons/xr-simulator/XRSimulator.tscn" id="13_trceg"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0wfyh"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -55,6 +56,7 @@ max_speed = 5.0
 acceleration = 10.0
 deceleration = 10.0
 jump_velocity = 5.0
+input_deadzone = 0.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="RobotCharacter" unique_id=300000002]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
@@ -83,10 +85,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.909086)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.45000005, -0.5999999)
 script = ExtResource("10_xrhud")
 
-[node name="XRGrabLocomotion" type="Node" parent="XROrigin3D" unique_id=800000001]
+[node name="XRGrabLocomotion" type="Node" parent="XROrigin3D" unique_id=800000001 node_paths=PackedStringArray("xr_origin")]
 script = ExtResource("11_grablocomot")
 left_controller = NodePath("../LeftHandController")
 right_controller = NodePath("../RightHandController")
+xr_origin = NodePath("..")
 
 [node name="RightHandController" type="XRController3D" parent="XROrigin3D" unique_id=559462315]
 tracker = &"right_hand"
@@ -102,9 +105,7 @@ show_when_tracked = true
 
 [node name="OpenXRRenderModelManager" type="OpenXRRenderModelManager" parent="XROrigin3D" unique_id=1213281292]
 
-[node name="left" type="OpenXRRenderModel" parent="XROrigin3D/OpenXRRenderModelManager" unique_id=600000011]
-
-[node name="right" type="OpenXRRenderModel" parent="XROrigin3D/OpenXRRenderModelManager" unique_id=600000010]
-
 [node name="HUD" type="CanvasLayer" parent="." unique_id=700000001]
 script = ExtResource("9_hud001")
+
+[node name="XRSimulator" parent="." unique_id=1936046458 instance=ExtResource("13_trceg")]
