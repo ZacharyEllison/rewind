@@ -81,11 +81,14 @@ func _check_rewind_trigger() -> void:
 	# Edge-detect: only fire on the frame the button first goes down
 	if pressed and not _rewind_was_pressed:
 		if game_manager:
-			if game_manager.is_recording_active():
+			if game_manager.is_rewinding_active():
+				# Cancel ghost playback immediately
+				game_manager.complete_rewind()
+			elif game_manager.is_recording_active():
 				game_manager.stop_recording()
 				# Playback is driven by main.gd via the rewinding_started signal
 				game_manager.trigger_rewind()
-			elif not game_manager.is_rewinding_active():
+			else:
 				# Start a fresh attempt after rewind has finished
 				game_manager.start_new_attempt()
 				game_manager.start_recording()
