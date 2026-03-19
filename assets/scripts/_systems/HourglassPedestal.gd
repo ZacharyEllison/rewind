@@ -96,7 +96,7 @@ func _accept_drop() -> void:
 	if not _game_manager or not _game_manager.has_method("trigger_rewind"):
 		return
 
-	var triggered := _game_manager.trigger_rewind("hourglass")
+	var triggered: bool = _game_manager.trigger_rewind("hourglass")
 	if not triggered:
 		_triggered_this_attempt = false
 		_hourglass.schedule_return(_rest_anchor)
