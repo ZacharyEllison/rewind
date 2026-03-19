@@ -171,5 +171,5 @@ func _setup_interaction_area() -> void:
 func _set_interaction_enabled(enabled: bool) -> void:
 	if not _interaction_area:
 		return
-	_interaction_area.monitoring = enabled
-	_interaction_area.monitorable = enabled
+	_interaction_area.set_deferred("monitoring", enabled)
+	_interaction_area.set_deferred("monitorable", enabled)

@@ -94,6 +94,7 @@ script = ExtResource("11_grablocomot")
 left_controller = NodePath("../LeftHandController")
 right_controller = NodePath("../RightHandController")
 xr_origin = NodePath("..")
+drag_scale = 10.0
 
 [node name="RightHandController" type="XRController3D" parent="XROrigin3D" unique_id=559462315]
 script = ExtResource("13_xrcontrollerfallback")
