@@ -5,97 +5,114 @@ Game Jam Entry | Theme: Rewind | Engine: Godot 4.6 | Target: Quest 3 + PCVR (Ope
 
 ## Game Summary
 
-Seated XR platformer. Player watches a small robot from above (Astro Bot perspective). Each attempt records the robot's path. Pressing the rewind trigger replays the ghost of that path. The player uses that knowledge to guide the robot differently on the next attempt and reach the level goal.
-
-Core loop: Move robot → trigger rewind → watch ghost → retry with new knowledge → reach goal.
+Seated XR platformer where the player guides a small robot across a series of platforms from an above-shoulder perspective. Each attempt records the robot's path; pressing the rewind trigger plays back a ghost of that path. The player uses the ghost's route as a reference to navigate farther on the next attempt and eventually reach the goal zone.
 
 ---
 
-## Priorities (Jam Context: Playable Beats Polished)
+## Immediate — blocking basic playability right now
 
-### Immediate — needed before the game is playable at all
+1. **Confirm project entry point**
+   Open `project.godot` and verify `run/main_scene` points to `res://scenes/main.tscn`. If a stale root-level `main.tscn` exists, delete or archive it.
 
-1. **Confirm scene entry point**
-   - Verify `project.godot` main scene is `scenes/main.tscn`. Remove or archive `project_root/main.tscn` if it is the old one.
+2. **Confirm ghost shaders exist**
+   Verify `res://assets/shaders/ghost_fill.gdshader` and `res://assets/shaders/ghost_outline.gdshader` are present. `GhostAppearance.apply()` will silently fail and the ghost will be invisible/unstyled without them. If missing, create minimal passthrough versions or replace with a simple semi-transparent `StandardMaterial3D`.
 
-2. **Ghost robot mesh**
-   - Add `robot_gobot` mesh as a child of the `GhostRobot` node with a semi-transparent material (albedo alpha ~0.4, transparency enabled).
-   - Verify ghost appears and moves during rewind playback.
+3. **Fix fall-respawn recording gap**
+   `RobotCharacterController.respawn()` calls `retry_current_attempt()` which sets `is_recording = false` without restarting. After a fall the robot is unresponsive until the player presses the rewind button. Fix: call `game_manager.start_recording()` inside `respawn()` after `retry_current_attempt()`, or have `retry_current_attempt()` restart recording internally.
 
-3. **Goal trigger for level_01**
-   - Add an Area3D at the destination in `level_01.tscn`.
-   - On `body_entered`, signal GameManager → show level-complete state → load next level (or restart for now).
+4. **Implement level transition on goal reached**
+   `GameManager.goal_reached()` emits `attempt_completed` but nothing listens. Connect `attempt_completed` in `main.gd` (or level-completion flow) to show a brief win state and reload / advance the scene. A `get_tree().reload_current_scene()` is sufficient for a jam; a proper `change_scene_to_file()` is better.
 
-4. **Crystal pickup trigger**
-   - Add an Area3D crystal in `level_01.tscn`.
-   - On `body_entered`, call `game_manager.add_sand_crystal()`.
-   - Reconcile `_update_sand_system()` (level-lookup at init) with `add_sand_crystal()` (incremental) — pick one approach and remove the other.
-
-5. **Minimal HUD (Label3D or SubViewport)**
-   - Attempt number, current rewind-time budget (crystals collected × 30s), and a "REWIND / RETRY" prompt so the player knows what the button does.
-   - Does not need to be beautiful — a Label3D floating in world space is fine.
+5. **Replace CanvasLayer HUD with world-space UI**
+   `HUD.gd` uses `CanvasLayer` which is invisible in OpenXR. Replace with either:
+   - A `SubViewport` texture projected onto a quad mesh anchored near the robot (follows play area), or
+   - A set of `Label3D` nodes parented to a world-space anchor near `XROrigin3D`.
+   Minimum display: attempt number, crystals collected, time remaining.
 
 ---
 
-### Short-term — needed before a full playthrough exists
+## Short-term — needed for a complete playable loop
 
-6. **Hourglass object (VR mechanic)**
-   - Create `Hourglass.tscn`: RigidBody3D + grab point (XR Tools `pickable.tscn` as base).
-   - Detect flip: when the hourglass local Y-axis flips past ~90° from upright, fire `trigger_rewind()` on GameManager.
-   - Replace the controller-button rewind trigger with this (or keep button as fallback).
+6. **Sand timer countdown in HUD**
+   `GameManager.current_attempt_duration` is updated in `_process`. Expose remaining time via a signal or a getter, and display it in the HUD so the player knows when rewind will auto-trigger.
 
-7. **Ghost rotation recording**
-   - Extend GameManager recording to store `Array[Basis]` or `Array[float]` (Y-rotation only) alongside positions.
-   - Apply in `GhostRobot._physics_process` so the ghost faces the direction it was moving.
+7. **Player prompt / tutorial text**
+   A `Label3D` in world space (or part of the HUD) showing "B/Y = Rewind" and "A/X = Jump" until the player has pressed rewind at least once. Removes confusion about what the controller does.
 
-8. **Levels 2–3 (minimum viable content)**
-   - Duplicate `level_01.tscn`, modify geometry and obstacle layout.
-   - Level 2: introduce a button the ghost must press to raise a platform.
-   - Level 3: longer path, second crystal.
+8. **Hourglass VR object (core jam mechanic)**
+   Create `Hourglass.tscn`: `RigidBody3D` + XR Tools pickable base.
+   Flip detection: when local Y-axis dot product with `Vector3.UP` drops below 0 (i.e. held upside-down), call `GameManager.stop_recording()` then `trigger_rewind()`.
+   Keep B/Y button as a fallback so desktop testing still works.
 
-9. **Level transition**
-   - On goal reached: fade out, load next level scene, reset GameManager state.
-   - A simple `get_tree().change_scene_to_file()` is sufficient.
+9. **Levels 2–3 (minimum viable content)**
+   Duplicate `level_01.tscn`. Level 2: add a moving platform or a narrower gap. Level 3: longer route, require ghost knowledge to time a gap. Wire level transitions from step 4 to load these in sequence.
 
-10. **Retry button (in-world)**
-    - A grabbable or pokeable button (XR Tools `interactable_area_button`) that calls `game_manager.retry_current_attempt()`.
+10. **Level transition with fade**
+    On `attempt_completed`: fade viewport to black (a `ColorRect` AnimationPlayer tween is fine), call `get_tree().change_scene_to_file()`, fade back in. Reset `GameManager` state between levels via `_initialize_game()`.
 
----
-
-### Stretch — if time permits
-
-- Levels 4–10 (template: alternate crystal / no-crystal levels; crystals at 1, 3, 5, 7, 9)
-- Audio: single ambient loop + 3 SFX (footstep, crystal collect, level complete)
-- Main menu scene
-- Level select scene
-- Quest 3 export and on-device test (120Hz, confirm no hitches during ghost playback)
+11. **Remove double CollisionShape3D from SandCrystal and GoalZone**
+    Both scripts build a collision shape in `_ready()` AND the .tscn bakes a bare `CollisionShape3D` child. Remove the baked-in `CollisionShape3D` nodes from `level_01.tscn` (and any future levels) so each Area3D has exactly one shape. Low impact on gameplay but keeps the scene clean.
 
 ---
 
-## Architecture Reference (current)
+## Stretch — polish and extra content
+
+- **In-world retry button** — XR Tools interactable area or poke button that calls `retry_current_attempt()` + `start_recording()`.
+- **Levels 4–10** — alternate crystal / no-crystal levels; crystals placed at levels 1, 3, 5, 7, 9.
+- **Audio** — ambient loop, footstep SFX (on `move_and_slide` landing), crystal collect chime, level-complete sting.
+- **Main menu scene** — title card + "Start" button.
+- **Quest 3 export + on-device test** — confirm 90Hz minimum, no hitches during ghost playback, HUD readable at arm's length.
+- **Ghost tint variation** — oldest ghost slightly more transparent than newest so players can distinguish runs at a glance.
+
+---
+
+## Architecture Reference
 
 ```
 scenes/main.tscn  (entry point)
-  GameManager (GameManager.gd)
-  RobotCharacter (RobotCharacterController.gd + CharacterBody3D)
-    robot_gobot (mesh)
-      RobotAnimationController.gd
-  GhostRobot (GhostRobot.gd + Node3D)
-    [needs: robot_gobot mesh, semi-transparent material]
+  GameManager (Node, GameManager.gd)          group: "game_manager"
+  Level01 (instance: scenes/level_01.tscn)
+    GoalZone (Area3D, GoalZone.gd)            → call_group("game_manager", "goal_reached")
+    SandCrystal x2 (Area3D, SandCrystal.gd)  → call_group("game_manager", "add_sand_crystal")
+  RobotCharacter (CharacterBody3D, RobotCharacterController.gd)
+    robot_gobot (GLB mesh, RobotAnimationController.gd)
+  GhostRobot (Node3D, GhostRobot.gd)          — pool managed by main.gd; duplicated per crystal
+    robot_gobot (GLB mesh)                    — materials overridden at runtime by GhostAppearance
+  HUD (CanvasLayer → should become world-space, HUD.gd)
+  StartXR / XROrigin3D / FallbackCamera
 ```
 
 Signal flow:
-- RobotCharacterController detects input → calls `GameManager.stop_recording()` + `trigger_rewind()`
-- GameManager emits `rewinding_started` → main.gd starts `GhostRobot.start_playback()`
-- GhostRobot emits `playback_finished` → main.gd sets `GameManager.is_rewinding = false` + emits `rewind_completed`
-- Player presses rewind again (after ghost finishes) → `start_new_attempt()` + `start_recording()`
+```
+RobotCharacterController
+  → presses B/Y/Escape
+  → GameManager.stop_recording() + trigger_rewind()
+  → GameManager emits rewinding_started
+  → main.gd starts GhostRobot(s).start_playback()
+  → each GhostRobot emits playback_finished
+  → main.gd decrements counter; when 0 → GameManager.complete_rewind()
+  → GameManager emits rewind_completed
+  → presses B/Y again → start_new_attempt() + start_recording()
+
+GoalZone.body_entered
+  → GameManager.goal_reached()
+  → GameManager emits attempt_completed
+  → [TODO: main.gd listens → load next level]
+
+SandCrystal.body_entered
+  → GameManager.add_sand_crystal()
+  → GameManager emits sand_crystal_collected + ghost_slots_changed
+  → main.gd rebuilds ghost pool
+  → HUD updates crystal count and ghost slot display
+```
 
 ---
 
 ## Constraints
 
-- No fail state — robot respawns on fall, player can always retry
-- 30s max attempt time per crystal (1 crystal = 30s, 5 crystals = 150s)
-- Controller-only input (no hand tracking required)
-- Seated VR — do not require standing or room-scale
-- Quest 3 performance target: 90Hz minimum, 120Hz preferred
+- No fail state — robot respawns on fall; player can always retry
+- 30 s max attempt time baseline; each crystal adds 1 ghost slot (and 30 s of rewind history)
+- Controller input required; hand tracking not required
+- Seated VR — no standing or room-scale requirement
+- Quest 3 performance target: 90 Hz minimum, 120 Hz preferred
+- Renderer: `gl_compatibility` (required for Meta Quest 3 via OpenXR)

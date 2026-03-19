@@ -102,8 +102,15 @@ func _check_fall() -> void:
 func respawn() -> void:
 	velocity = Vector3.ZERO
 	global_position = spawn_position
-	if game_manager:
-		game_manager.retry_current_attempt()
+	if not game_manager:
+		return
+	if game_manager.is_recording_active():
+		# Treat the fall as the natural end of the run — stop and show the ghost.
+		game_manager.stop_recording()
+		game_manager.trigger_rewind()
+	elif not game_manager.is_rewinding_active():
+		# Fell before recording anything — start fresh immediately.
+		game_manager.start_recording()
 
 
 # --- Input ---
