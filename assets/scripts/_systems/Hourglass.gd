@@ -30,6 +30,7 @@ func is_upside_down() -> bool:
 func snap_to_anchor(anchor: Node3D) -> void:
 	if not anchor:
 		return
+	_set_top_level_preserving_transform(false)
 	linear_velocity = Vector3.ZERO
 	angular_velocity = Vector3.ZERO
 	sleeping = true
@@ -160,11 +161,13 @@ func _ensure_return_timer() -> void:
 
 func _on_picked_up(_pickable) -> void:
 	cancel_pending_return()
+	_set_top_level_preserving_transform(true)
 	sleeping = false
 
 
 func _on_dropped(_pickable) -> void:
 	if not freeze:
+		_set_top_level_preserving_transform(true)
 		sleeping = false
 
 
@@ -178,3 +181,12 @@ func _on_return_timer_timeout() -> void:
 	_pending_return_anchor = null
 	reset_to_anchor(anchor)
 	freeze = true
+
+
+func _set_top_level_preserving_transform(enabled: bool) -> void:
+	if top_level == enabled:
+		return
+
+	var current_global := global_transform
+	top_level = enabled
+	global_transform = current_global
