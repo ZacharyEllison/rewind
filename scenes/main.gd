@@ -188,3 +188,9 @@ func _process(delta: float) -> void:
 	var euler := cam.rotation
 	euler.x = clamp(euler.x, deg_to_rad(-80), deg_to_rad(80))
 	cam.rotation = euler
+
+	# Keep the hourglass rig (child of XROrigin3D) tracking the robot in flat mode.
+	var xr_origin := get_node_or_null("XROrigin3D") as Node3D
+	var robot := get_node_or_null("RobotCharacter") as Node3D
+	if xr_origin and robot:
+		xr_origin.global_position = robot.global_position

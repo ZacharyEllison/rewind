@@ -1,10 +1,9 @@
 [gd_scene format=3 uid="uid://level01main"]
 
-[ext_resource type="Script" path="res://assets/scripts/_systems/GoalZone.gd" id="1_goalzone"]
+[ext_resource type="Script" path="res://assets/scripts/_systems/CircuitBoardGoal.gd" id="1_cbgoal"]
 [ext_resource type="Script" path="res://assets/scripts/_systems/SandCrystal.gd" id="2_sandcrystal"]
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_goal"]
-size = Vector3(3.5, 0.5, 3.5)
+[ext_resource type="Script" path="res://assets/scripts/_systems/WaypointPlatform.gd" id="3_wayplat"]
+[ext_resource type="Script" path="res://assets/scripts/_systems/PressureButton.gd" id="4_button"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_start"]
 size = Vector3(6, 0.4, 6)
@@ -12,46 +11,34 @@ size = Vector3(6, 0.4, 6)
 [sub_resource type="BoxMesh" id="BoxMesh_start"]
 size = Vector3(6, 0.4, 6)
 
-[sub_resource type="StandardMaterial3D" id="Mat_ground"]
+[sub_resource type="StandardMaterial3D" id="Mat_start"]
 albedo_color = Color(0.3, 0.55, 0.3, 1)
 
-[sub_resource type="StandardMaterial3D" id="Mat_platform"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_mid"]
+size = Vector3(6, 0.4, 6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_mid"]
+size = Vector3(6, 0.4, 6)
+
+[sub_resource type="StandardMaterial3D" id="Mat_mid"]
 albedo_color = Color(0.4, 0.4, 0.75, 1)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_p1"]
-size = Vector3(3, 0.4, 3)
+[sub_resource type="BoxShape3D" id="BoxShape3D_gp"]
+size = Vector3(6, 0.4, 6)
 
-[sub_resource type="BoxMesh" id="BoxMesh_p1"]
-size = Vector3(3, 0.4, 3)
+[sub_resource type="BoxMesh" id="BoxMesh_gp"]
+size = Vector3(6, 0.4, 6)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_p2"]
-size = Vector3(3, 0.4, 3)
-
-[sub_resource type="BoxMesh" id="BoxMesh_p2"]
-size = Vector3(3, 0.4, 3)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_p3"]
-size = Vector3(3, 0.4, 2.5)
-
-[sub_resource type="BoxMesh" id="BoxMesh_p3"]
-size = Vector3(3, 0.4, 2.5)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_p4"]
-size = Vector3(2.5, 0.4, 2.5)
-
-[sub_resource type="BoxMesh" id="BoxMesh_p4"]
-size = Vector3(2.5, 0.4, 2.5)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_p5"]
-size = Vector3(4, 0.4, 4)
-
-[sub_resource type="BoxMesh" id="BoxMesh_p5"]
-size = Vector3(4, 0.4, 4)
+[sub_resource type="StandardMaterial3D" id="Mat_gp"]
+albedo_color = Color(0.3, 0.55, 0.3, 1)
 
 [node name="Level01" type="Node3D"]
 
+[node name="SpawnPoint" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+
 [node name="PlayerSpawnPoint" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4872775, 1.245059)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4872775, 2.0)
 
 [node name="StartPlatform" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
@@ -61,68 +48,50 @@ shape = SubResource("BoxShape3D_start")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="StartPlatform"]
 mesh = SubResource("BoxMesh_start")
-surface_material_override/0 = SubResource("Mat_ground")
+surface_material_override/0 = SubResource("Mat_start")
 
-[node name="Platform1" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1, 0)
+[node name="Button1" type="Area3D" parent="StartPlatform"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.3, 1.5)
+script = ExtResource("4_button")
+latching = true
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Platform1"]
-shape = SubResource("BoxShape3D_p1")
+[node name="MiddlePlatform" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, 0)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Platform1"]
-mesh = SubResource("BoxMesh_p1")
-surface_material_override/0 = SubResource("Mat_platform")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="MiddlePlatform"]
+shape = SubResource("BoxShape3D_mid")
 
-[node name="Platform2" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 2, -3)
+[node name="MeshInstance3D" type="MeshInstance3D" parent="MiddlePlatform"]
+mesh = SubResource("BoxMesh_mid")
+surface_material_override/0 = SubResource("Mat_mid")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Platform2"]
-shape = SubResource("BoxShape3D_p2")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Platform2"]
-mesh = SubResource("BoxMesh_p2")
-surface_material_override/0 = SubResource("Mat_platform")
-
-[node name="Platform3" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 3, 0)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Platform3"]
-shape = SubResource("BoxShape3D_p3")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Platform3"]
-mesh = SubResource("BoxMesh_p3")
-surface_material_override/0 = SubResource("Mat_platform")
-
-[node name="Platform4" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 4.5, 3)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Platform4"]
-shape = SubResource("BoxShape3D_p4")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Platform4"]
-mesh = SubResource("BoxMesh_p4")
-surface_material_override/0 = SubResource("Mat_platform")
+[node name="Button2" type="Area3D" parent="MiddlePlatform"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -1.5)
+script = ExtResource("4_button")
+latching = true
 
 [node name="GoalPlatform" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 6, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GoalPlatform"]
-shape = SubResource("BoxShape3D_p5")
+shape = SubResource("BoxShape3D_gp")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="GoalPlatform"]
-mesh = SubResource("BoxMesh_p5")
-surface_material_override/0 = SubResource("Mat_ground")
+mesh = SubResource("BoxMesh_gp")
+surface_material_override/0 = SubResource("Mat_gp")
 
-[node name="GoalZone" type="Area3D" parent="GoalPlatform"]
-script = ExtResource("1_goalzone")
+[node name="CircuitBoardGoal" type="Area3D" parent="GoalPlatform"]
+script = ExtResource("1_cbgoal")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="GoalPlatform/GoalZone"]
-shape = SubResource("BoxShape3D_goal")
+[node name="MovingPlatform" type="AnimatableBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2, 0)
+script = ExtResource("3_wayplat")
+waypoints = PackedVector3Array(0, -2, 0, 5.5, 0, 0, 16.5, 0, 0)
+move_duration = 2.5
 
-[node name="SandCrystal_Platform2" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 2.8, -3)
+[node name="SandCrystal" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0.8, 0)
 script = ExtResource("2_sandcrystal")
 
-[node name="SandCrystal_GoalPlatform" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 7.2, 0)
-script = ExtResource("2_sandcrystal")
+[connection signal="activated" from="StartPlatform/Button1" to="MovingPlatform" method="move_to_waypoint" binds=[1]]
+[connection signal="activated" from="MiddlePlatform/Button2" to="MovingPlatform" method="move_to_waypoint" binds=[2]]
