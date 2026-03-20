@@ -80,7 +80,11 @@ rewind/
 
 ## 📜 License
 
+[CC0](https://creativecommons.org/publicdomain/zero/1.0/)
+
 Game Jam entry - Theme: Rewind
+
+Inspired by [CHRONOTRON](https://armorgames.com/play/1567/chronotron) by ScaryBug Games (ArmorGames.com, 2008).
 
 ---
 
