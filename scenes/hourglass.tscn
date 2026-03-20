@@ -9,3 +9,9 @@ freeze = true
 release_mode = 0
 mass = 0.35
 script = ExtResource("1_hourglass")
+
+[node name="TopCap" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.126, 0)
+
+[node name="BottomCap" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.131, 0)

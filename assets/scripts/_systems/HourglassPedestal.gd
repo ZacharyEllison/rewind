@@ -1,6 +1,10 @@
 ## HourglassPedestal
-## Player-following pedestal that accepts the hourglass only when it is
-## released upside-down on the trigger area, then requests a rewind.
+## Player-following pedestal that accepts the hourglass when it falls into the
+## trigger area. Accepts either orientation:
+##   - Upside-down + recording active → lerp to SnapAnchor and trigger a rewind.
+##   - Right-side-up (or can't rewind) → lerp to RestAnchor (just resting).
+## The hourglass uses physics (gravity) after being released, so the player
+## can physically place or toss it onto the pedestal.
 
 class_name HourglassPedestal
 extends Node3D
@@ -26,6 +30,9 @@ func _ready() -> void:
 	if _hourglass:
 		_hourglass.picked_up.connect(_on_hourglass_picked_up)
 		_hourglass.dropped.connect(_on_hourglass_dropped)
+
+	if _trigger_area:
+		_trigger_area.body_entered.connect(_on_trigger_body_entered)
 
 	if _game_manager and _game_manager.has_signal("new_attempt_started"):
 		_game_manager.new_attempt_started.connect(reset)
@@ -65,33 +72,35 @@ func _on_hourglass_picked_up(_pickable) -> void:
 func _on_hourglass_dropped(_pickable) -> void:
 	if _is_resetting or not _hourglass or not _rest_anchor:
 		return
+	# Physics is now active on the hourglass. Schedule a fallback return in case
+	# it misses the pedestal entirely. body_entered on _trigger_area handles the
+	# normal case where the hourglass falls into the pedestal zone.
+	_hourglass.schedule_return(_rest_anchor)
 
-	if _can_accept_drop():
-		_accept_drop()
-	else:
-		_hourglass.schedule_return(_rest_anchor)
 
+## Called when a physics body enters the pedestal trigger zone.
+## This is the primary snap handler — fires when the falling hourglass arrives.
+func _on_trigger_body_entered(body: Node3D) -> void:
+	if body != _hourglass:
+		return
+	# Ignore if being held, resetting, or already frozen (placed by code, not physics).
+	if _hourglass.is_picked_up() or _is_resetting or _hourglass.freeze:
+		return
+	_hourglass.cancel_pending_return()
 
-func _can_accept_drop() -> bool:
-	if _triggered_this_attempt:
-		return false
-	if not _hourglass or not _snap_anchor or not _trigger_area:
-		return false
-	if _hourglass.is_picked_up():
-		return false
-	if not _trigger_area.overlaps_body(_hourglass):
-		return false
-	if not _hourglass.is_upside_down():
-		return false
-	if not _game_manager or not _game_manager.has_method("is_recording_active"):
-		return false
-	return _game_manager.is_recording_active()
+	if _hourglass.is_upside_down() and not _triggered_this_attempt:
+		if _game_manager and _game_manager.has_method("is_recording_active") and _game_manager.is_recording_active():
+			_accept_drop()
+			return
+
+	# Right-side-up, or upside-down but can't trigger rewind → snap to rest anchor.
+	_hourglass.lerp_to_anchor(_rest_anchor)
 
 
 func _accept_drop() -> void:
 	_triggered_this_attempt = true
 	_hourglass.cancel_pending_return()
-	_hourglass.snap_to_anchor(_snap_anchor)
+	_hourglass.lerp_to_anchor(_snap_anchor)
 
 	if not _game_manager or not _game_manager.has_method("trigger_rewind"):
 		return
@@ -99,4 +108,4 @@ func _accept_drop() -> void:
 	var triggered: bool = _game_manager.trigger_rewind("hourglass")
 	if not triggered:
 		_triggered_this_attempt = false
-		_hourglass.schedule_return(_rest_anchor)
+		_hourglass.lerp_to_anchor(_rest_anchor)
