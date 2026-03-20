@@ -15,6 +15,48 @@
 [ext_resource type="PackedScene" uid="uid://b4ysuy43poobf" path="res://addons/godot-xr-tools/functions/function_pickup.tscn" id="14_functionpickup"]
 [ext_resource type="PackedScene" path="res://scenes/player_hourglass_rig.tscn" id="15_hourglassrig"]
 
+[sub_resource type="GDScript" id="GDScript_player_coords"]
+script/source = "extends CanvasLayer
+
+@export var tracked_node_path: NodePath = NodePath(\"../XROrigin3D\")
+
+@onready var _coordinates_label: Label = $CoordinatesLabel
+
+var _tracked_node: Node3D = null
+
+
+func _ready() -> void:
+\t_resolve_tracked_node()
+\t_update_text()
+
+
+func _process(_delta: float) -> void:
+\tif not _tracked_node or not is_instance_valid(_tracked_node):
+\t\t_resolve_tracked_node()
+\t_update_text()
+
+
+func _resolve_tracked_node() -> void:
+\t_tracked_node = null
+\tif not tracked_node_path.is_empty():
+\t\t_tracked_node = get_node_or_null(tracked_node_path) as Node3D
+\tif _tracked_node:
+\t\treturn
+\tvar parent := get_parent()
+\tif parent:
+\t\t_tracked_node = parent.get_node_or_null(\"XROrigin3D\") as Node3D
+
+
+func _update_text() -> void:
+\tif not _coordinates_label:
+\t\treturn
+\tif not _tracked_node:
+\t\t_coordinates_label.text = \"Player\\nX: --\\nY: --\\nZ: --\"
+\t\treturn
+\tvar pos := _tracked_node.global_position
+\t_coordinates_label.text = \"Player\\nX: %.3f\\nY: %.3f\\nZ: %.3f\" % [pos.x, pos.y, pos.z]
+"
+
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0wfyh"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
 ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -133,3 +175,32 @@ script = ExtResource("12_xrinput")
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=700000001]
 script = ExtResource("9_hud001")
+
+[node name="PlayerCoordinatesHUD" type="CanvasLayer" parent="."]
+layer = 20
+script = SubResource("GDScript_player_coords")
+
+[node name="CoordinatesBackground" type="ColorRect" parent="PlayerCoordinatesHUD"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -240.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 112.0
+color = Color(0, 0, 0, 0.55)
+
+[node name="CoordinatesLabel" type="Label" parent="PlayerCoordinatesHUD"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -228.0
+offset_top = 22.0
+offset_right = -28.0
+offset_bottom = 106.0
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.95, 0.98, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 20
+text = "Player\nX: --\nY: --\nZ: --"
