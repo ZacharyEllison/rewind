@@ -1,18 +1,18 @@
 [gd_scene format=3 uid="uid://bxhwg4umeeers"]
 
-[ext_resource type="PackedScene" uid="uid://btl6gxtms558y" path="res://assets/models/robot_gobot.glb" id="1_o5qli"]
+[ext_resource type="PackedScene" uid="uid://butbonsu2h5lb" path="res://assets/models/robot_gobot.glb" id="1_o5qli"]
 [ext_resource type="PackedScene" uid="uid://clc5dre31iskm" path="res://addons/godot-xr-tools/xr/start_xr.tscn" id="2_0wfyh"]
-[ext_resource type="Script" uid="uid://b0v4tdsbspp7v" path="res://assets/scripts/_systems/GameManager.gd" id="3_gm001"]
+[ext_resource type="Script" uid="uid://bmvksidee84t7" path="res://assets/scripts/_systems/GameManager.gd" id="3_gm001"]
 [ext_resource type="Script" uid="uid://b3b33nyudaioo" path="res://assets/scripts/_systems/RobotCharacterController.gd" id="4_rc001"]
 [ext_resource type="Script" uid="uid://11mb7syk1qla" path="res://scenes/main.gd" id="5_main01"]
 [ext_resource type="Script" uid="uid://ckhvuv3fy3bjd" path="res://assets/scripts/_systems/GhostRobot.gd" id="7_ghost"]
 [ext_resource type="Script" uid="uid://rd1drmo882nv" path="res://assets/scripts/_systems/RobotAnimationController.gd" id="8_anim"]
-[ext_resource type="Script" path="res://assets/scripts/HUD.gd" id="9_hud001"]
-[ext_resource type="Script" path="res://assets/scripts/XRHUD.gd" id="10_xrhud"]
-[ext_resource type="Script" path="res://assets/scripts/_systems/XRGrabLocomotion.gd" id="11_grablocomot"]
+[ext_resource type="Script" uid="uid://c710b55l00gho" path="res://assets/scripts/HUD.gd" id="9_hud001"]
+[ext_resource type="Script" uid="uid://r7or82cxlo7x" path="res://assets/scripts/XRHUD.gd" id="10_xrhud"]
+[ext_resource type="Script" uid="uid://brinlmn4xd5b8" path="res://assets/scripts/_systems/XRGrabLocomotion.gd" id="11_grablocomot"]
 [ext_resource type="Script" uid="uid://buvpojeeu8m43" path="res://assets/scripts/_systems/XRRobotInput.gd" id="12_xrinput"]
-[ext_resource type="Script" path="res://assets/scripts/_systems/XRControllerVisualFallback.gd" id="13_xrcontrollerfallback"]
-[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/functions/function_pickup.tscn" id="14_functionpickup"]
+[ext_resource type="Script" uid="uid://xjl7e4sv3jqj" path="res://assets/scripts/_systems/XRControllerVisualFallback.gd" id="13_xrcontrollerfallback"]
+[ext_resource type="PackedScene" uid="uid://b4ysuy43poobf" path="res://addons/godot-xr-tools/functions/function_pickup.tscn" id="14_functionpickup"]
 [ext_resource type="PackedScene" path="res://scenes/player_hourglass_rig.tscn" id="15_hourglassrig"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0wfyh"]
@@ -80,14 +80,18 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4872775, 5.245059)
 [node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D" unique_id=413341949]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.5666535)
 
-[node name="OpenXRRenderModelManager" type="OpenXRRenderModelManager" parent="XROrigin3D"]
-tracker = 1
-
-[node name="PlayerHourglassRig" parent="XROrigin3D" instance=ExtResource("15_hourglassrig")]
-
 [node name="XRHUD" type="Node3D" parent="XROrigin3D/XRCamera3D" unique_id=900000001]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.45000005, -0.5999999)
 script = ExtResource("10_xrhud")
+
+[node name="OpenXRRenderModelManager" type="OpenXRRenderModelManager" parent="XROrigin3D" unique_id=2099661815]
+tracker = 1
+
+[node name="PlayerHourglassRig" parent="XROrigin3D" unique_id=1105060215 instance=ExtResource("15_hourglassrig")]
+hourglass_path = NodePath("")
+rest_anchor_path = NodePath("")
+snap_anchor_path = NodePath("")
+trigger_area_path = NodePath("")
 
 [node name="XRGrabLocomotion" type="Node" parent="XROrigin3D" unique_id=800000001 node_paths=PackedStringArray("xr_origin")]
 script = ExtResource("11_grablocomot")
@@ -97,26 +101,28 @@ xr_origin = NodePath("..")
 drag_scale = 10.0
 
 [node name="RightHandController" type="XRController3D" parent="XROrigin3D" unique_id=559462315]
-script = ExtResource("13_xrcontrollerfallback")
-render_model_manager = NodePath("OpenXRRenderModelManager")
 tracker = &"right_hand"
 pose = &"grip"
 show_when_tracked = true
+script = ExtResource("13_xrcontrollerfallback")
+render_model_manager = NodePath("OpenXRRenderModelManager")
 
-[node name="FunctionPickup" parent="XROrigin3D/RightHandController" instance=ExtResource("14_functionpickup")]
+[node name="FunctionPickup" parent="XROrigin3D/RightHandController" unique_id=833211819 instance=ExtResource("14_functionpickup")]
+transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 0, 0)
 
 [node name="OpenXRRenderModelManager" type="OpenXRRenderModelManager" parent="XROrigin3D/RightHandController" unique_id=1213281293]
 tracker = 3
 make_local_to_pose = "grip"
 
 [node name="LeftHandController" type="XRController3D" parent="XROrigin3D" unique_id=439232952]
-script = ExtResource("13_xrcontrollerfallback")
-render_model_manager = NodePath("OpenXRRenderModelManager")
 tracker = &"left_hand"
 pose = &"grip"
 show_when_tracked = true
+script = ExtResource("13_xrcontrollerfallback")
+render_model_manager = NodePath("OpenXRRenderModelManager")
 
-[node name="FunctionPickup" parent="XROrigin3D/LeftHandController" instance=ExtResource("14_functionpickup")]
+[node name="FunctionPickup" parent="XROrigin3D/LeftHandController" unique_id=1598352437 instance=ExtResource("14_functionpickup")]
+transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 0, 0)
 
 [node name="OpenXRRenderModelManager" type="OpenXRRenderModelManager" parent="XROrigin3D/LeftHandController" unique_id=1213281294]
 tracker = 2
