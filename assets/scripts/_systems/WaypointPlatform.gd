@@ -1,6 +1,7 @@
 ## WaypointPlatform
 ## An AnimatableBody3D that slides through a series of exported world-space waypoints.
-## Call move_to_waypoint(index) to advance the platform to the next stop (only forward).
+## Call move_to_waypoint(index) to move to any stop, including reversing from the
+## platform's current in-between position.
 ## reset() snaps instantly back to waypoints[0] and is called automatically on new_attempt_started.
 
 class_name WaypointPlatform
@@ -56,10 +57,14 @@ func _connect_game_manager() -> void:
 		gm.new_attempt_started.connect(reset)
 
 
-## Advance the platform to the given waypoint index.
-## Ignored if index <= current waypoint, out of range, or already moving.
+## Move the platform to the given waypoint index.
+## Ignored if the index is out of range or already the current move target.
 func move_to_waypoint(index: int) -> void:
-	if index <= _current_waypoint or index >= waypoints.size() or _is_moving:
+	if index < 0 or index >= waypoints.size():
+		return
+	if _is_moving and _current_waypoint == index:
+		return
+	if not _is_moving and _current_waypoint == index and global_position.is_equal_approx(waypoints[index]):
 		return
 	_current_waypoint = index
 	_start_move(global_position, waypoints[index])
