@@ -53,7 +53,7 @@ surface_material_override/0 = SubResource("Mat_start")
 [node name="Button1" type="Area3D" parent="StartPlatform"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.3, 1.5)
 script = ExtResource("4_button")
-latching = true
+latching = false
 
 [node name="MiddlePlatform" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, 0)
@@ -68,7 +68,7 @@ surface_material_override/0 = SubResource("Mat_mid")
 [node name="Button2" type="Area3D" parent="MiddlePlatform"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -1.5)
 script = ExtResource("4_button")
-latching = true
+latching = false
 
 [node name="GoalPlatform" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 0)
@@ -94,4 +94,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0.8, 0)
 script = ExtResource("2_sandcrystal")
 
 [connection signal="activated" from="StartPlatform/Button1" to="MovingPlatform" method="move_to_waypoint" binds=[1]]
+[connection signal="deactivated" from="StartPlatform/Button1" to="MovingPlatform" method="move_to_waypoint" binds=[0]]
 [connection signal="activated" from="MiddlePlatform/Button2" to="MovingPlatform" method="move_to_waypoint" binds=[2]]
+[connection signal="deactivated" from="MiddlePlatform/Button2" to="MovingPlatform" method="move_to_waypoint" binds=[1]]
