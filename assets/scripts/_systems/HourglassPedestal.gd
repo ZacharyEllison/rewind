@@ -14,6 +14,8 @@ extends Node3D
 @export var snap_anchor_path: NodePath
 @export var trigger_area_path: NodePath
 
+const PULL_DURATION: float = 0.35
+
 var _hourglass: Hourglass
 var _rest_anchor: Node3D
 var _snap_anchor: Node3D
@@ -21,6 +23,7 @@ var _trigger_area: Area3D
 var _game_manager: Node = null
 var _triggered_this_attempt: bool = false
 var _is_resetting: bool = false
+var _pull_request_id: int = 0
 
 
 func _ready() -> void:
@@ -44,6 +47,7 @@ func reset() -> void:
 	if not _hourglass or not _rest_anchor:
 		return
 
+	_cancel_pending_pull()
 	_triggered_this_attempt = false
 	_is_resetting = true
 	_hourglass.cancel_pending_return()
@@ -57,15 +61,24 @@ func reset() -> void:
 
 
 func _resolve_nodes() -> void:
-	_hourglass = get_node_or_null(hourglass_path) as Hourglass
-	_rest_anchor = get_node_or_null(rest_anchor_path) as Node3D
-	_snap_anchor = get_node_or_null(snap_anchor_path) as Node3D
-	_trigger_area = get_node_or_null(trigger_area_path) as Area3D
+	_hourglass = _resolve_node(hourglass_path, "Hourglass") as Hourglass
+	_rest_anchor = _resolve_node(rest_anchor_path, "RestAnchor") as Node3D
+	_snap_anchor = _resolve_node(snap_anchor_path, "SnapAnchor") as Node3D
+	_trigger_area = _resolve_node(trigger_area_path, "TriggerArea") as Area3D
+
+
+func _resolve_node(path: NodePath, fallback_name: String) -> Node:
+	if not path.is_empty():
+		var resolved := get_node_or_null(path)
+		if resolved:
+			return resolved
+	return get_node_or_null(fallback_name)
 
 
 func _on_hourglass_picked_up(_pickable) -> void:
 	if not _hourglass:
 		return
+	_cancel_pending_pull()
 	_hourglass.cancel_pending_return()
 
 
@@ -88,24 +101,69 @@ func _on_trigger_body_entered(body: Node3D) -> void:
 		return
 	_hourglass.cancel_pending_return()
 
-	if _hourglass.is_upside_down() and not _triggered_this_attempt:
-		if _game_manager and _game_manager.has_method("is_recording_active") and _game_manager.is_recording_active():
-			_accept_drop()
-			return
+	if _should_pull_top_cap():
+		if not _triggered_this_attempt:
+			if _game_manager and _game_manager.has_method("is_recording_active") and _game_manager.is_recording_active():
+				_accept_drop()
+				return
+		_pull_to_anchor(_snap_anchor)
+		return
 
-	# Right-side-up, or upside-down but can't trigger rewind → snap to rest anchor.
-	_hourglass.lerp_to_anchor(_rest_anchor)
+	_pull_to_anchor(_rest_anchor)
 
 
 func _accept_drop() -> void:
 	_triggered_this_attempt = true
 	_hourglass.cancel_pending_return()
-	_hourglass.lerp_to_anchor(_snap_anchor)
+	var request_id := _pull_to_anchor(_snap_anchor)
 
+	if not _game_manager or not _game_manager.has_method("trigger_rewind"):
+		return
+
+	get_tree().create_timer(PULL_DURATION).timeout.connect(
+		_on_rewind_pull_finished.bind(request_id),
+		CONNECT_ONE_SHOT
+	)
+
+
+func _on_rewind_pull_finished(request_id: int) -> void:
+	if request_id != _pull_request_id or _is_resetting or not _hourglass:
+		return
 	if not _game_manager or not _game_manager.has_method("trigger_rewind"):
 		return
 
 	var triggered: bool = _game_manager.trigger_rewind("hourglass")
 	if not triggered:
 		_triggered_this_attempt = false
-		_hourglass.lerp_to_anchor(_rest_anchor)
+		_pull_to_anchor(_rest_anchor)
+
+
+func _pull_to_anchor(anchor: Node3D) -> int:
+	if not _hourglass or not anchor:
+		return _pull_request_id
+	_pull_request_id += 1
+	_hourglass.lerp_to_anchor(anchor, PULL_DURATION)
+	return _pull_request_id
+
+
+func _cancel_pending_pull() -> void:
+	_pull_request_id += 1
+
+
+func _should_pull_top_cap() -> bool:
+	if not _hourglass:
+		return false
+	if not _rest_anchor and not _snap_anchor:
+		return _hourglass.is_upside_down()
+
+	var top_cap := _hourglass.top_cap
+	var bottom_cap := _hourglass.bottom_cap
+	if not top_cap and not bottom_cap:
+		return _hourglass.is_upside_down()
+	if top_cap and not bottom_cap:
+		return true
+	if bottom_cap and not top_cap:
+		return false
+
+	var target_position := _snap_anchor.global_position if _snap_anchor else _rest_anchor.global_position
+	return top_cap.global_position.distance_squared_to(target_position) < bottom_cap.global_position.distance_squared_to(target_position)
