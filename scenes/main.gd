@@ -14,6 +14,7 @@ var _ghost_template: Node = null
 
 ## Currently loaded level scene instance.
 var _current_level_scene: Node = null
+var _flat_cam_active: bool = false
 var _player_spawn_transform: Transform3D = Transform3D.IDENTITY
 var _has_player_spawn: bool = false
 
@@ -101,6 +102,7 @@ func _activate_flat_camera() -> void:
 	var cam: Camera3D = get_node_or_null("FallbackCamera")
 	if cam:
 		cam.make_current()
+		_flat_cam_active = true
 		print("Main: XR unavailable — FallbackCamera activated for desktop play.")
 	else:
 		push_warning("Main: FallbackCamera node not found; scene will have no active camera.")
@@ -170,3 +172,19 @@ func _reset_player_to_level_spawn() -> void:
 		return
 
 	xr_origin.global_transform = _player_spawn_transform
+
+
+func _process(delta: float) -> void:
+	if not _flat_cam_active:
+		return
+	var cam: Camera3D = get_node_or_null("FallbackCamera")
+	if not cam:
+		return
+	var yaw := (float(Input.is_key_pressed(KEY_LEFT)) - float(Input.is_key_pressed(KEY_RIGHT))) * 1.5 * delta
+	var pitch := (float(Input.is_key_pressed(KEY_UP)) - float(Input.is_key_pressed(KEY_DOWN))) * 1.0 * delta
+	cam.rotate_y(yaw)
+	cam.rotate_object_local(Vector3.RIGHT, pitch)
+	# Clamp pitch
+	var euler := cam.rotation
+	euler.x = clamp(euler.x, deg_to_rad(-80), deg_to_rad(80))
+	cam.rotation = euler

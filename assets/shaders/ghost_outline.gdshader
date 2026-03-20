@@ -6,7 +6,7 @@ shader_type spatial;
 render_mode unshaded, cull_front, blend_mix, depth_draw_opaque;
 
 uniform float outline_width : hint_range(0.0, 0.1) = 0.025;
-uniform vec3 outline_color : source_color = vec3(0.0, 0.0, 0.0);
+uniform vec3 outline_color : source_color = vec3(1.0, 1.0, 1.0);
 
 void vertex() {
 	// Transform vertex and normal into view space, then push outward.

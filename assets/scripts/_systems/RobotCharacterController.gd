@@ -104,10 +104,8 @@ func _get_combined_stick() -> Vector2:
 		controller_vec = xr_input.get_stick()
 
 	# Desktop keyboard fallback
-	var kb_x := (float(Input.is_key_pressed(KEY_D)) + float(Input.is_key_pressed(KEY_RIGHT))) \
-			  - (float(Input.is_key_pressed(KEY_A)) + float(Input.is_key_pressed(KEY_LEFT)))
-	var kb_y := (float(Input.is_key_pressed(KEY_W)) + float(Input.is_key_pressed(KEY_UP))) \
-			  - (float(Input.is_key_pressed(KEY_S)) + float(Input.is_key_pressed(KEY_DOWN)))
+	var kb_x := float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A))
+	var kb_y := float(Input.is_key_pressed(KEY_W)) - float(Input.is_key_pressed(KEY_S))
 	var kb_vec := Vector2(clamp(kb_x, -1.0, 1.0), clamp(kb_y, -1.0, 1.0))
 
 	if kb_vec.length_squared() > controller_vec.length_squared():
@@ -126,13 +124,13 @@ func _apply_horizontal_movement(delta: float) -> void:
 		var any_active := xr_input != null and xr_input.any_active()
 		if xr_cam and any_active:
 			move_dir = xr_cam.global_transform.basis * Vector3(stick.x, 0.0, -stick.y)
+			move_dir.y = 0.0
 		else:
 			var cam3d := get_viewport().get_camera_3d()
 			if cam3d:
 				move_dir = cam3d.global_transform.basis * Vector3(stick.x, 0.0, -stick.y)
 			else:
 				move_dir = Vector3(stick.x, 0.0, -stick.y)
-		move_dir.y = 0.0
 		if move_dir.length_squared() > 0.0001:
 			move_dir = move_dir.normalized()
 		else:

@@ -65,6 +65,7 @@ func _build_mesh() -> void:
 	_mesh_instance = MeshInstance3D.new()
 	_mesh_instance.name = "HourglassMesh"
 	_mesh_instance.mesh = load("res://assets/models/hourglass/model-triangulated.obj")
+	_mesh_instance.scale = Vector3(0.1, 0.1, 0.1)
 	add_child(_mesh_instance)
 
 

@@ -31,11 +31,11 @@ static func apply(root: Node3D, outline_width: float = 0.025) -> void:
 	var outline_mat := ShaderMaterial.new()
 	outline_mat.shader = outline_shader
 	outline_mat.set_shader_parameter("outline_width", outline_width)
-	outline_mat.set_shader_parameter("outline_color", Color(0.0, 0.0, 0.0))
+	outline_mat.set_shader_parameter("outline_color", Color(1.0, 1.0, 1.0))
 
 	var fill_mat := ShaderMaterial.new()
 	fill_mat.shader = fill_shader
-	fill_mat.set_shader_parameter("fill_color", Color(1.0, 1.0, 1.0))
+	fill_mat.set_shader_parameter("fill_color", Color(0.0, 0.0, 0.0))
 	fill_mat.set_shader_parameter("fill_alpha", 0.85)
 	# Chain: fill renders first (front faces), outline renders second (back faces).
 	fill_mat.next_pass = outline_mat
